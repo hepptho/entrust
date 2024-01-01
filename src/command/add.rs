@@ -3,13 +3,14 @@ use std::path::{Path, PathBuf};
 use std::{fs, io};
 
 use clap::Args;
-use dialoguer::Password;
+use inquire::validator::Validation;
+use inquire::PasswordDisplayMode;
 use log::{debug, info};
 
 use crate::backend::encrypt_with_backend;
 use crate::command::BackendOption;
 use crate::error::ParResult;
-use crate::theme::DIALOGUER_THEME;
+use crate::theme::INQUIRE_RENDER_CONFIG;
 use crate::{git, resolve};
 
 pub(super) const ABOUT: &str = "Add a new password";
@@ -54,10 +55,21 @@ fn encrypt(home: &Path, args: &AddArgs) -> ParResult<()> {
 }
 
 pub(crate) fn read_password_interactive() -> ParResult<String> {
-    let pass = Password::with_theme(&*DIALOGUER_THEME)
-        .with_prompt("Enter new Password")
-        .with_confirmation("Confirm password", "The entered passwords do not match.")
-        .report(false)
-        .interact()?;
+    let pass = inquire::Password::new("Enter new Password ❯")
+        .with_render_config(*INQUIRE_RENDER_CONFIG)
+        .with_custom_confirmation_message("Confirm password ❯")
+        .with_custom_confirmation_error_message("The entered passwords do not match.")
+        .with_display_toggle_enabled()
+        .with_display_mode(PasswordDisplayMode::Masked)
+        .with_validator(|input: &str| {
+            if input.is_empty() {
+                Ok(Validation::Invalid(
+                    "The password must not be empty.".into(),
+                ))
+            } else {
+                Ok(Validation::Valid)
+            }
+        })
+        .prompt()?;
     Ok(pass)
 }

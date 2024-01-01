@@ -2,12 +2,12 @@ use crate::backend::decrypt_file;
 use crate::command::clear_clipboard;
 use crate::error::ParResult;
 use crate::resolve::{get_existing_locations, resolve_existing};
-use crate::theme::DIALOGUER_THEME;
+use crate::theme::INQUIRE_RENDER_CONFIG;
 use anyhow::anyhow;
 use clap::Args;
 use color_print::cstr;
 use copypasta::{ClipboardContext, ClipboardProvider};
-use dialoguer::FuzzySelect;
+use inquire::Select;
 use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
 use std::{fs, io};
@@ -22,8 +22,7 @@ pub(super) const LONG_ABOUT: &str = cstr!("
 
 #[derive(Args, Debug)]
 pub struct GetArgs {
-    #[arg(default_value = "")]
-    key: String,
+    key: Option<String>,
     #[command(flatten)]
     output: Option<OutputArgs>,
     /// Delay in seconds after which the clipboard should be cleared
@@ -86,21 +85,18 @@ pub fn run(home: PathBuf, args: GetArgs) -> ParResult<()> {
     Ok(())
 }
 
-fn get_location(home: &Path, key: &str) -> ParResult<PathBuf> {
-    match resolve_existing(home, key, false) {
-        Ok(path) => Ok(path),
-        Err(_) => select_location(home, key),
+fn get_location(home: &Path, key: &Option<String>) -> ParResult<PathBuf> {
+    match key {
+        Some(k) => resolve_existing(home, k, false),
+        None => select_key(home).map(|k| home.join(k)),
     }
 }
 
-fn select_location(home: &Path, key: &str) -> ParResult<PathBuf> {
+fn select_key(home: &Path) -> ParResult<String> {
     let vec = get_existing_locations(home)?;
-    let sel = FuzzySelect::with_theme(&*DIALOGUER_THEME)
-        .with_prompt("Select key")
-        .with_initial_text(key)
-        .items(&vec)
-        .report(false)
-        .interact()?;
-    let selected = &vec[sel];
-    resolve_existing(home, selected, false)
+    let selected = Select::new("Select key", vec)
+        .with_render_config(*INQUIRE_RENDER_CONFIG)
+        .with_page_size(15)
+        .prompt()?;
+    Ok(selected)
 }

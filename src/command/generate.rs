@@ -46,9 +46,9 @@ fn output(home: &Path, args: GenerateArgs, pass: String) -> ParResult<()> {
             if !args.no_anim && io::stdout().is_terminal() {
                 animate(&pass);
             } else if io::stdout().is_terminal() {
-                println!("{}", console::style(pass).cyan());
-            } else {
                 println!("{pass}");
+            } else {
+                print!("{pass}");
             }
         }
         Output::Clipboard => {

@@ -6,9 +6,9 @@ use crate::backend::gpg::Gpg;
 use crate::command::BackendOption;
 use crate::error::ParResult;
 use crate::git;
-use crate::theme::DIALOGUER_THEME;
+use crate::theme::INQUIRE_RENDER_CONFIG;
 use anyhow::anyhow;
-use dialoguer::Input;
+use inquire::Text;
 use std::fs;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read};
@@ -26,11 +26,11 @@ pub trait Backend {
         if file.exists() {
             return Ok(());
         }
-        let recipient: String = Input::with_theme(&*DIALOGUER_THEME)
-            .with_prompt(format!(
-                "Please enter the {display_name} recipient for which the file should be created"
-            ))
-            .interact_text()?;
+        let recipient: String = Text::new(
+            format!("{display_name} recipient for which the file should be created ❯").as_str(),
+        )
+        .with_render_config(*INQUIRE_RENDER_CONFIG)
+        .prompt()?;
         fs::write(file, recipient.as_bytes())?;
         Ok(())
     }

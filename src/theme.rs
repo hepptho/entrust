@@ -1,30 +1,36 @@
 use clap::builder::styling::AnsiColor;
 use clap::builder::Styles;
-use console::{style, Style};
-use dialoguer::theme::ColorfulTheme;
+use inquire::ui::{
+    Attributes, Color, ErrorMessageRenderConfig, IndexPrefix, RenderConfig, StyleSheet, Styled,
+};
 use once_cell::sync::Lazy;
 
-pub static DIALOGUER_THEME: Lazy<ColorfulTheme> = Lazy::new(|| ColorfulTheme {
-    defaults_style: Style::new().for_stderr().cyan(),
-    prompt_style: Style::new().for_stderr().bold().bright().blue(),
-    prompt_prefix: style("".to_string()).for_stderr().bright().yellow(),
-    prompt_suffix: style("❯".to_string()).for_stderr().black().bright(),
-    success_prefix: style("".to_string()).for_stderr(),
-    success_suffix: style("".to_string()).for_stderr(),
-    error_prefix: style("✘".to_string()).for_stderr().red(),
-    error_style: Style::new().for_stderr().red(),
-    hint_style: Style::new().for_stderr().black().bright(),
-    values_style: Style::new().for_stderr().green(),
-    active_item_style: Style::new().for_stderr().bright().blue().underlined(),
-    inactive_item_style: Style::new().for_stderr(),
-    active_item_prefix: style("❯".to_string()).for_stderr().bright().yellow(),
-    inactive_item_prefix: style(" ".to_string()).for_stderr(),
-    checked_item_prefix: style("✔".to_string()).for_stderr().green(),
-    unchecked_item_prefix: style("⬚".to_string()).for_stderr().magenta(),
-    picked_item_prefix: style("❯".to_string()).for_stderr().green(),
-    unpicked_item_prefix: style(" ".to_string()).for_stderr(),
-    fuzzy_cursor_style: Style::new().for_stderr().black().on_white(),
-    fuzzy_match_highlight_style: Style::new().for_stderr().bright().yellow().bold(),
+pub static INQUIRE_RENDER_CONFIG: Lazy<RenderConfig> = Lazy::new(|| RenderConfig {
+    prompt_prefix: Styled::new("?")
+        .with_fg(Color::rgb(255, 184, 108))
+        .with_attr(Attributes::BOLD),
+    answered_prompt_prefix: Styled::new("❯").with_fg(Color::LightYellow),
+    prompt: StyleSheet::new().with_fg(Color::LightBlue),
+    default_value: StyleSheet::empty(),
+    placeholder: StyleSheet::new().with_fg(Color::DarkGrey),
+    help_message: StyleSheet::empty().with_fg(Color::DarkGrey),
+    text_input: StyleSheet::empty(),
+    error_message: ErrorMessageRenderConfig::default_colored(),
+    password_mask: '*',
+    answer: StyleSheet::empty().with_fg(Color::LightYellow),
+    canceled_prompt_indicator: Styled::new("<canceled>").with_fg(Color::DarkRed),
+    highlighted_option_prefix: Styled::new("❯").with_fg(Color::LightYellow),
+    scroll_up_prefix: Styled::new("^"),
+    scroll_down_prefix: Styled::new("v"),
+    selected_checkbox: Styled::new("[x]").with_fg(Color::LightGreen),
+    unselected_checkbox: Styled::new("[ ]"),
+    option_index_prefix: IndexPrefix::None,
+    option: StyleSheet::empty(),
+    selected_option: Some(
+        StyleSheet::new()
+            .with_fg(Color::LightYellow)
+            .with_attr(Attributes::BOLD),
+    ),
 });
 
 pub fn clap_theme() -> Styles {
