@@ -53,11 +53,11 @@ fn bin_name() -> String {
 
 #[derive(Subcommand, Debug)]
 pub enum ParSubcommands {
-    #[command(about = add::ABOUT, alias = "insert")]
+    #[command(about = add::ABOUT, long_about = add::LONG_ABOUT, alias = "insert")]
     Add(AddArgs),
     #[command(about = get::ABOUT, long_about = get::LONG_ABOUT, alias = "g")]
     Get(GetArgs),
-    #[command(about = edit::ABOUT)]
+    #[command(about = edit::ABOUT, long_about = edit::LONG_ABOUT)]
     Edit(EditArgs),
     #[command(about = r#move::ABOUT, alias = "mv")]
     Move(MoveArgs),

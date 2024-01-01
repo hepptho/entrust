@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use std::{fs, io};
 
 use clap::Args;
+use color_print::cstr;
 use inquire::validator::Validation;
 use inquire::PasswordDisplayMode;
 use log::{debug, info};
@@ -15,11 +16,19 @@ use crate::{git, resolve};
 
 pub(super) const ABOUT: &str = "Add a new password";
 
+pub(super) const LONG_ABOUT: &str = cstr!(
+    "
+
+  Add a new password
+
+  Reads from <bold,#ffb86c>stdin</> or offers an interactive prompt if stdin is empty"
+);
+
 #[derive(Args, Debug)]
 pub struct AddArgs {
     /// The key under which to store the encrypted file
     key: String,
-    /// Choose gpg or age for en-/decryption
+    /// Choose gpg or age for encryption
     #[arg(short, long, value_enum, default_value_t = BackendOption::Age)]
     backend: BackendOption,
     /// Do not add the new file to git

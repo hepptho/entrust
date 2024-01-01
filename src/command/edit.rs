@@ -5,12 +5,21 @@ use crate::error::ParResult;
 use crate::git;
 use crate::resolve::resolve_existing;
 use clap::Args;
+use color_print::cstr;
 use crossterm::style::Stylize;
-use std::io::IsTerminal;
+use std::fs;
 use std::path::PathBuf;
-use std::{fs, io};
 
 pub(super) const ABOUT: &str = "Change an existing password";
+
+pub(super) const LONG_ABOUT: &str = cstr!(
+    "
+
+  Change an existing password
+
+  Displays the old password and offers an interactive prompt.
+  To overwrite the password without interaction, <bold,#ffb86c>remove</> and <bold,#ffb86c>add</>."
+);
 
 #[derive(Args, Debug)]
 pub struct EditArgs {
@@ -28,15 +37,12 @@ pub fn run(home: PathBuf, args: EditArgs) -> ParResult<()> {
     bak.as_mut_os_string().push(".bak");
     fs::rename(&location, &bak)?;
 
-    let result = if io::stdin().is_terminal() {
-        let old = decrypt_file(&bak)?;
-        eprintln!("{} {}", "Old password:".blue(), old.bold());
-        let new = read_password_interactive()?;
-        encrypt_with_backend(&args.backend, new.as_bytes(), &home, &location)
-    } else {
-        encrypt_with_backend(&args.backend, io::stdin(), &home, &location)
-    };
+    let old = decrypt_file(&bak)?;
+    eprintln!("{} {}", "Old password:".blue(), old.bold());
+    let new = read_password_interactive()?;
+    encrypt_with_backend(&args.backend, new.as_bytes(), &home, &location)?;
+
     git::edit(&home, &args.key)?;
     fs::remove_file(bak)?;
-    result
+    Ok(())
 }
