@@ -1,4 +1,4 @@
-use crate::backend::decrypt_file;
+use crate::backend::Backend;
 use crate::command::clear_clipboard;
 use crate::error::ParResult;
 use crate::resolve::{get_existing_locations, resolve_existing};
@@ -64,9 +64,9 @@ enum OutputType<'a> {
     File(&'a Path),
 }
 
-pub fn run(home: PathBuf, args: GetArgs) -> ParResult<()> {
-    let location = get_location(&home, &args.key)?;
-    let decrypted = decrypt_file(&location)?;
+pub fn run(store: PathBuf, args: GetArgs) -> ParResult<()> {
+    let location = get_location(&store, &args.key)?;
+    let decrypted = Backend::decrypt(&location)?;
     match args.output_type() {
         OutputType::Stdout => {
             print!("{decrypted}");
@@ -85,15 +85,15 @@ pub fn run(home: PathBuf, args: GetArgs) -> ParResult<()> {
     Ok(())
 }
 
-fn get_location(home: &Path, key: &Option<String>) -> ParResult<PathBuf> {
+fn get_location(store: &Path, key: &Option<String>) -> ParResult<PathBuf> {
     match key {
-        Some(k) => resolve_existing(home, k, false),
-        None => select_key(home).map(|k| home.join(k)),
+        Some(k) => resolve_existing(store, k, false),
+        None => select_key(store).map(|k| store.join(k)),
     }
 }
 
-fn select_key(home: &Path) -> ParResult<String> {
-    let vec = get_existing_locations(home)?;
+fn select_key(store: &Path) -> ParResult<String> {
+    let vec = get_existing_locations(store)?;
     let selected = Select::new("Select key", vec)
         .with_render_config(*INQUIRE_RENDER_CONFIG)
         .with_page_size(15)

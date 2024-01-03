@@ -8,8 +8,7 @@ use inquire::validator::Validation;
 use inquire::PasswordDisplayMode;
 use log::{debug, info};
 
-use crate::backend::encrypt_with_backend;
-use crate::command::BackendOption;
+use crate::backend::Backend;
 use crate::error::ParResult;
 use crate::theme::INQUIRE_RENDER_CONFIG;
 use crate::{git, resolve};
@@ -29,25 +28,25 @@ pub struct AddArgs {
     /// The key under which to store the encrypted file
     key: String,
     /// Choose gpg or age for encryption
-    #[arg(short, long, value_enum, default_value_t = BackendOption::Age)]
-    backend: BackendOption,
+    #[arg(short, long, value_enum, default_value_t = Backend::Age)]
+    backend: Backend,
     /// Do not add the new file to git
     #[arg(long = "no-git")]
     no_git: bool,
 }
 
-pub fn run(home: PathBuf, args: AddArgs) -> ParResult<()> {
+pub fn run(store: PathBuf, args: AddArgs) -> ParResult<()> {
     debug!("add run");
-    encrypt(&home, &args)?;
+    encrypt(&store, &args)?;
     if !args.no_git {
-        git::add(&home, &args.key)?
+        git::add(&store, &args.key)?
     }
     info!("Added {}", args.key);
     Ok(())
 }
 
-fn encrypt(home: &Path, args: &AddArgs) -> ParResult<()> {
-    let location = resolve::resolve_new(home, &args.key)?;
+fn encrypt(store: &Path, args: &AddArgs) -> ParResult<()> {
+    let location = resolve::resolve_new(store, &args.key)?;
     debug!("Location: {:?}", location);
     if let Some(parent) = location.parent() {
         fs::create_dir_all(parent)?;
@@ -59,7 +58,7 @@ fn encrypt(home: &Path, args: &AddArgs) -> ParResult<()> {
         io::stdin().read_to_string(&mut input)?;
         input
     };
-    encrypt_with_backend(&args.backend, input.as_bytes(), home, &location)?;
+    args.backend.encrypt(input.as_bytes(), store, &location)?;
     Ok(())
 }
 

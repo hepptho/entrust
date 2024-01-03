@@ -16,7 +16,7 @@ use crate::command::get::GetArgs;
 use crate::command::r#move::MoveArgs;
 use crate::command::remove::RemoveArgs;
 use crate::theme;
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{Parser, Subcommand};
 use color_print::cstr;
 use std::env;
 
@@ -69,12 +69,6 @@ pub enum ParSubcommands {
     ClearClipboard(ClearClipboardArgs),
     #[command(about = completions::ABOUT)]
     Completions(CompletionsArgs),
-}
-
-#[derive(ValueEnum, Clone, Debug)]
-pub enum BackendOption {
-    Age,
-    Gpg,
 }
 
 #[cfg(test)]

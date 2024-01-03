@@ -6,7 +6,6 @@ use std::path::{Path, PathBuf};
 use copypasta::{ClipboardContext, ClipboardProvider};
 use rand::prelude::SliceRandom;
 
-use crate::backend::encrypt_with_backend;
 use crate::command::generate::animation::animate;
 use crate::command::generate::parse::{GenerateArgs, Output, Type};
 use crate::error::ParResult;
@@ -20,9 +19,9 @@ pub(crate) const ABOUT: &str = "Generate a random password";
 
 const PRINTABLE_ASCII: &str = r#"!"$#%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~"#;
 
-pub fn run(home: PathBuf, args: GenerateArgs) -> ParResult<()> {
+pub fn run(store: PathBuf, args: GenerateArgs) -> ParResult<()> {
     let pass = generate_pass(&args)?;
-    output(&home, args, pass)?;
+    output(&store, args, pass)?;
     Ok(())
 }
 
@@ -40,7 +39,7 @@ fn generate_pass(args: &GenerateArgs) -> ParResult<String> {
     Ok(pass)
 }
 
-fn output(home: &Path, args: GenerateArgs, pass: String) -> ParResult<()> {
+fn output(store: &Path, args: GenerateArgs, pass: String) -> ParResult<()> {
     match args.output.output() {
         Output::Stdout => {
             if !args.no_anim && io::stdout().is_terminal() {
@@ -57,10 +56,10 @@ fn output(home: &Path, args: GenerateArgs, pass: String) -> ParResult<()> {
                 .map_err(|_| anyhow!("Could not access clipboard"))?;
         }
         Output::Store(key) => {
-            let location = resolve::resolve_new(home, key)?;
-            encrypt_with_backend(&args.backend, pass.as_bytes(), home, &location)?;
+            let location = resolve::resolve_new(store, key)?;
+            args.backend.encrypt(pass.as_bytes(), store, &location)?;
             if !args.no_git {
-                git::add(home, key)?;
+                git::add(store, key)?;
             }
         }
     }

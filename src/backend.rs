@@ -1,28 +1,61 @@
 pub(crate) mod age;
 pub(crate) mod gpg;
 
-use crate::backend::age::Age;
-use crate::backend::gpg::Gpg;
-use crate::command::BackendOption;
 use crate::error::ParResult;
-use crate::git;
 use crate::theme::INQUIRE_RENDER_CONFIG;
 use anyhow::anyhow;
+use clap::ValueEnum;
 use inquire::Text;
 use std::fs;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read};
 use std::path::Path;
 
-pub trait Backend {
-    fn encrypt(content: &mut impl Read, recipient: &str, out_path: &Path) -> ParResult<()>;
+#[derive(ValueEnum, Clone, Debug)]
+pub enum Backend {
+    Age,
+    Gpg,
+}
 
-    fn decrypt(path: &Path) -> ParResult<String>;
+impl Backend {
+    pub fn encrypt(&self, mut content: impl Read, store: &Path, out_path: &Path) -> ParResult<()> {
+        match self {
+            Backend::Age => {
+                self.create_recipient_file_if_not_present(store, "age")?;
+                age::encrypt(&mut content, &self.recipient(store)?, out_path)?;
+            }
+            Backend::Gpg => {
+                self.create_recipient_file_if_not_present(store, "gpg")?;
+                gpg::encrypt(&mut content, &self.recipient(store)?, out_path)?;
+            }
+        }
+        Ok(())
+    }
 
-    fn recipient_file_name() -> &'static str;
+    pub fn decrypt(path: &Path) -> ParResult<String> {
+        let first_line = read_first_line(path)?;
+        if first_line.contains("BEGIN AGE ENCRYPTED FILE")
+            || first_line.contains("age-encryption.org")
+        {
+            age::decrypt(path)
+        } else {
+            gpg::decrypt(path)
+        }
+    }
 
-    fn create_recipient_file_if_not_present(dir: &Path, display_name: &str) -> ParResult<()> {
-        let file = dir.join(Self::recipient_file_name());
+    fn recipient_file_name(&self) -> &'static str {
+        match self {
+            Backend::Age => age::RECIPIENT_FILE_NAME,
+            Backend::Gpg => gpg::RECIPIENT_FILE_NAME,
+        }
+    }
+
+    fn create_recipient_file_if_not_present(
+        &self,
+        store: &Path,
+        display_name: &str,
+    ) -> ParResult<()> {
+        let file = store.join(self.recipient_file_name());
         if file.exists() {
             return Ok(());
         }
@@ -35,18 +68,9 @@ pub trait Backend {
         Ok(())
     }
 
-    fn recipient(dir: &Path) -> ParResult<String> {
-        let recipient_file = dir.join(Self::recipient_file_name());
+    fn recipient(&self, dir: &Path) -> ParResult<String> {
+        let recipient_file = dir.join(self.recipient_file_name());
         read_first_line(&recipient_file)
-    }
-}
-
-pub fn decrypt_file(path: &Path) -> ParResult<String> {
-    let first_line = read_first_line(path)?;
-    if first_line.contains("BEGIN AGE ENCRYPTED FILE") {
-        Age::decrypt(path)
-    } else {
-        Gpg::decrypt(path)
     }
 }
 
@@ -57,26 +81,4 @@ fn read_first_line(path: &Path) -> ParResult<String> {
         .next()
         .ok_or(anyhow!("{path:?} is empty"))??;
     Ok(first_line)
-}
-
-pub fn encrypt_with_backend(
-    backend: &BackendOption,
-    mut content: impl Read,
-    home: &Path,
-    out_path: &Path,
-) -> ParResult<()> {
-    let name = match backend {
-        BackendOption::Age => {
-            Age::create_recipient_file_if_not_present(home, "age")?;
-            Age::encrypt(&mut content, &Age::recipient(home)?, out_path)?;
-            Age::recipient_file_name()
-        }
-        BackendOption::Gpg => {
-            Gpg::create_recipient_file_if_not_present(home, "gpg")?;
-            Gpg::encrypt(&mut content, &Gpg::recipient(home)?, out_path)?;
-            Gpg::recipient_file_name()
-        }
-    };
-    git::add(home, name)?;
-    Ok(())
 }

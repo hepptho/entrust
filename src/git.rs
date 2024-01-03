@@ -4,46 +4,58 @@ use log::debug;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
-pub fn init(home: &Path) -> ParResult<()> {
-    run_command(git().args(["init", "--initial-branch", "main"]), home, true)?;
-    run_command(git().args(["add", "*"]), home, true)?;
+pub fn init(store: &Path) -> ParResult<()> {
+    run_command(
+        git().args(["init", "--initial-branch", "main"]),
+        store,
+        true,
+    )?;
+    run_command(git().args(["add", "*"]), store, true)?;
     run_command(
         git().args(["commit", "--message", "initialize rp password store repo"]),
-        home,
+        store,
         true,
     )?;
     Ok(())
 }
 
-pub fn add(home: &Path, key: &str) -> ParResult<()> {
-    debug!("git add(home: {home:?}, key: {key})");
-    if has_repository(home) {
-        run_command(git().arg("add").arg(home.join(key).as_os_str()), home, true)?;
-        run_command(git().args(["commit", "--message", "add", key]), home, true)?;
+pub fn add(store: &Path, key: &str) -> ParResult<()> {
+    debug!("git add(store: {store:?}, key: {key})");
+    if has_repository(store) {
+        run_command(
+            git().arg("add").arg(store.join(key).as_os_str()),
+            store,
+            true,
+        )?;
+        run_command(git().args(["commit", "--message", "add", key]), store, true)?;
     }
     Ok(())
 }
 
-pub fn edit(home: &Path, key: &str) -> ParResult<()> {
-    if has_repository(home) && is_file_tracked(home, key) {
-        run_command(git().arg("add").arg(home.join(key).as_os_str()), home, true)?;
+pub fn edit(store: &Path, key: &str) -> ParResult<()> {
+    if has_repository(store) && is_file_tracked(store, key) {
+        run_command(
+            git().arg("add").arg(store.join(key).as_os_str()),
+            store,
+            true,
+        )?;
         run_command(
             git().args(["commit", "--message", &format!("edit {}", key)]),
-            home,
+            store,
             true,
         )?;
     }
     Ok(())
 }
 
-pub fn r#move(home: &Path, from_key: &str, to_key: &str) -> ParResult<bool> {
-    if has_repository(home) && is_file_tracked(home, from_key) {
+pub fn r#move(store: &Path, from_key: &str, to_key: &str) -> ParResult<bool> {
+    if has_repository(store) && is_file_tracked(store, from_key) {
         run_command(
             git()
                 .arg("mv")
-                .arg(home.join(from_key).as_os_str())
-                .arg(home.join(to_key).as_os_str()),
-            home,
+                .arg(store.join(from_key).as_os_str())
+                .arg(store.join(to_key).as_os_str()),
+            store,
             true,
         )?;
         run_command(
@@ -52,7 +64,7 @@ pub fn r#move(home: &Path, from_key: &str, to_key: &str) -> ParResult<bool> {
                 "--message",
                 &format!("move {} to {}", from_key, to_key),
             ]),
-            home,
+            store,
             true,
         )?;
         Ok(true)
@@ -61,25 +73,29 @@ pub fn r#move(home: &Path, from_key: &str, to_key: &str) -> ParResult<bool> {
     }
 }
 
-pub fn remove(home: &Path, key: &str) -> ParResult<()> {
-    if has_repository(home) && is_file_tracked(home, key) {
-        run_command(git().arg("rm").arg(home.join(key).as_os_str()), home, true)?;
+pub fn remove(store: &Path, key: &str) -> ParResult<()> {
+    if has_repository(store) && is_file_tracked(store, key) {
+        run_command(
+            git().arg("rm").arg(store.join(key).as_os_str()),
+            store,
+            true,
+        )?;
         run_command(
             Command::new("git").args(["commit", "--message", &format!("remove {}", key)]),
-            home,
+            store,
             true,
         )?;
     }
     Ok(())
 }
 
-fn run_command(command: &mut Command, home: &Path, inherit_io: bool) -> ParResult<()> {
+fn run_command(command: &mut Command, store: &Path, inherit_io: bool) -> ParResult<()> {
     let stdio = || match inherit_io {
         true => Stdio::inherit(),
         false => Stdio::null(),
     };
     let result = command
-        .current_dir(home)
+        .current_dir(store)
         .stdin(stdio())
         .stdout(stdio())
         .stderr(stdio())
@@ -98,17 +114,17 @@ fn run_command(command: &mut Command, home: &Path, inherit_io: bool) -> ParResul
     }
 }
 
-fn has_repository(home: &Path) -> bool {
-    home.join(".git").is_dir()
+fn has_repository(store: &Path) -> bool {
+    store.join(".git").is_dir()
 }
 
-fn is_file_tracked(home: &Path, key: &str) -> bool {
+fn is_file_tracked(store: &Path, key: &str) -> bool {
     run_command(
         git()
             .arg("ls-files")
             .arg("--error-unmatch")
-            .arg(home.join(key).as_os_str()),
-        home,
+            .arg(store.join(key).as_os_str()),
+        store,
         false,
     )
     .is_ok()

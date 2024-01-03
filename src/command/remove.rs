@@ -18,8 +18,8 @@ pub struct RemoveArgs {
     recurse: bool,
 }
 
-pub fn run(home: PathBuf, args: RemoveArgs) -> ParResult<()> {
-    let location = resolve_existing(&home, &args.key, true)?;
+pub fn run(store: PathBuf, args: RemoveArgs) -> ParResult<()> {
+    let location = resolve_existing(&store, &args.key, true)?;
     let is_dir = location.is_dir();
     if is_dir && !args.recurse {
         return Err(anyhow!(
@@ -32,7 +32,7 @@ pub fn run(home: PathBuf, args: RemoveArgs) -> ParResult<()> {
     } else {
         fs::remove_file(&location)?;
     };
-    git::remove(&home, &args.key)?;
+    git::remove(&store, &args.key)?;
     if let Some(parent) = location.parent() {
         if parent.exists() && parent.read_dir().iter().next().is_none() {
             fs::remove_dir(parent)?;
