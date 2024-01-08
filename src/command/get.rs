@@ -8,9 +8,9 @@ use clap::Args;
 use color_print::cstr;
 use copypasta::{ClipboardContext, ClipboardProvider};
 use inquire::Select;
+use std::io;
 use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
-use std::{fs, io};
 
 pub(super) const ABOUT: &str = "Decrypt a password";
 
@@ -22,66 +22,37 @@ pub(super) const LONG_ABOUT: &str = cstr!("
 
 #[derive(Args, Debug)]
 pub struct GetArgs {
+    /// The key of the password to decrypt
     key: Option<String>,
-    #[command(flatten)]
-    output: Option<OutputArgs>,
+    /// Copy the password to the clipboard
+    #[arg(short, long)]
+    clipboard: bool,
     /// Delay in seconds after which the clipboard should be cleared
     /// (only effective with clipboard output)
-    #[arg(short = 'd', long, default_value_t = 10, value_name = "INT")]
+    #[arg(
+        short = 'd',
+        long,
+        default_value_t = 10,
+        value_name = "INT",
+        requires = "clipboard"
+    )]
     clear_clipboard_delay: u32,
-}
-
-impl GetArgs {
-    fn output_type(&self) -> OutputType {
-        match &self.output {
-            Some(OutputArgs {
-                clipboard: true,
-                file: _,
-            }) => OutputType::Clipboard,
-            Some(OutputArgs {
-                clipboard: false,
-                file: Some(file),
-            }) => OutputType::File(file),
-            _ => OutputType::Stdout,
-        }
-    }
-}
-
-#[derive(Args, Debug)]
-#[group(multiple = false)]
-struct OutputArgs {
-    /// Copy the password to the clipboard,
-    #[arg(short, long, help_heading = "Output")]
-    clipboard: bool,
-    /// Write the password to a file
-    #[arg(short, long, help_heading = "Output")]
-    file: Option<PathBuf>,
-}
-
-enum OutputType<'a> {
-    Stdout,
-    Clipboard,
-    File(&'a Path),
 }
 
 pub fn run(store: PathBuf, args: GetArgs) -> ParResult<()> {
     let location = get_location(&store, &args.key)?;
     let decrypted = Backend::decrypt(&location)?;
-    match args.output_type() {
-        OutputType::Stdout => {
-            print!("{decrypted}");
-            if io::stdout().is_terminal() {
-                println!()
-            }
+    if args.clipboard {
+        ClipboardContext::new()
+            .and_then(|mut ctx| ctx.set_contents(decrypted))
+            .map_err(|_| anyhow!("Could not access Clipboard"))?;
+        clear_clipboard::clear_in_new_process(args.clear_clipboard_delay)?;
+    } else {
+        print!("{decrypted}");
+        if io::stdout().is_terminal() {
+            println!()
         }
-        OutputType::Clipboard => {
-            ClipboardContext::new()
-                .and_then(|mut ctx| ctx.set_contents(decrypted))
-                .map_err(|_| anyhow!("Could not access Clipboard"))?;
-            clear_clipboard::clear_in_new_process(args.clear_clipboard_delay)?;
-        }
-        OutputType::File(file) => fs::write(file, decrypted)?,
-    }
+    };
     Ok(())
 }
 
