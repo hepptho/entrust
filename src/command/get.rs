@@ -28,12 +28,12 @@ pub struct GetArgs {
     #[arg(short, long)]
     clipboard: bool,
     /// Delay in seconds after which the clipboard should be cleared
-    /// (only effective with clipboard output)
+    /// (only effective with --clipboard)
     #[arg(
         short = 'd',
         long,
         default_value_t = 10,
-        value_name = "INT",
+        value_name = "SECONDS",
         requires = "clipboard"
     )]
     clear_clipboard_delay: u32,

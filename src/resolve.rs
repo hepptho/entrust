@@ -1,10 +1,10 @@
 use crate::error::ParResult;
 use anyhow::anyhow;
+use std::path;
 use std::path::{Path, PathBuf};
-use std::{io, path};
 use walkdir::WalkDir;
 
-pub fn get_existing_locations(base: &Path) -> io::Result<Vec<String>> {
+pub fn get_existing_locations(base: &Path) -> ParResult<Vec<String>> {
     let walk_dir = WalkDir::new(base);
     let mut ret = Vec::new();
     for entry in walk_dir {
@@ -13,10 +13,10 @@ pub fn get_existing_locations(base: &Path) -> io::Result<Vec<String>> {
             continue;
         }
         let path = pathdiff::diff_paths(entry.path(), base)
-            .ok_or(io::Error::other("Error resolving relative path"))?
+            .ok_or(anyhow!("Error resolving relative path"))?
             .into_os_string()
             .into_string()
-            .map_err(|_| io::Error::other("Encountered invalid UTF-8"))?;
+            .map_err(|_| anyhow!("Encountered invalid UTF-8"))?;
         if path.starts_with('.') {
             continue;
         }

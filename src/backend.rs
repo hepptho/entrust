@@ -33,10 +33,7 @@ impl Backend {
     }
 
     pub fn decrypt(path: &Path) -> ParResult<String> {
-        let first_line = read_first_line(path)?;
-        if first_line.contains("BEGIN AGE ENCRYPTED FILE")
-            || first_line.contains("age-encryption.org")
-        {
+        if is_age_encrypted(path)? {
             age::decrypt(path)
         } else {
             gpg::decrypt(path)
@@ -72,6 +69,14 @@ impl Backend {
         let recipient_file = dir.join(self.recipient_file_name());
         read_first_line(&recipient_file)
     }
+}
+
+fn is_age_encrypted(path: &Path) -> ParResult<bool> {
+    let first_line = read_first_line(path)?;
+    Ok(
+        first_line.contains("BEGIN AGE ENCRYPTED FILE")
+            || first_line.contains("age-encryption.org"),
+    )
 }
 
 fn read_first_line(path: &Path) -> ParResult<String> {
