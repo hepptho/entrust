@@ -15,9 +15,13 @@ use crate::command::generate::parse::GenerateArgs;
 use crate::command::get::GetArgs;
 use crate::command::r#move::MoveArgs;
 use crate::command::remove::RemoveArgs;
+use crate::error::ParResult;
+use crate::store::get_store;
 use crate::theme;
-use clap::{Parser, Subcommand};
+use crate::tree::print_tree;
+use clap::{CommandFactory, Parser, Subcommand};
 use color_print::cstr;
+use log::debug;
 use std::env;
 
 const ABOUT: &str = cstr!(
@@ -37,7 +41,7 @@ const LONG_ABOUT: &str = cstr!("
 #[derive(Parser, Debug)]
 #[command(author, version, about = ABOUT, long_about = LONG_ABOUT, propagate_version = true, bin_name = bin_name(),
 styles = theme::clap_theme())]
-pub struct Par {
+struct Par {
     #[command(subcommand)]
     pub command: Option<ParSubcommands>,
 }
@@ -52,7 +56,7 @@ fn bin_name() -> String {
 }
 
 #[derive(Subcommand, Debug)]
-pub enum ParSubcommands {
+enum ParSubcommands {
     #[command(about = add::ABOUT, long_about = add::LONG_ABOUT, alias = "insert")]
     Add(AddArgs),
     #[command(about = get::ABOUT, long_about = get::LONG_ABOUT, alias = "g")]
@@ -69,6 +73,33 @@ pub enum ParSubcommands {
     ClearClipboard(ClearClipboardArgs),
     #[command(about = completions::ABOUT)]
     Completions(CompletionsArgs),
+}
+
+pub fn run() -> ParResult<()> {
+    let par = Par::parse();
+    debug!("{par:#?}");
+
+    let store = get_store()?;
+    debug!("store: {store:?}");
+
+    match par.command {
+        Some(ParSubcommands::Add(args)) => add::run(store, args),
+        Some(ParSubcommands::ClearClipboard(args)) => clear_clipboard::run(args),
+        Some(ParSubcommands::Edit(args)) => edit::run(store, args),
+        Some(ParSubcommands::Generate(args)) => generate::run(store, args),
+        Some(ParSubcommands::Get(args)) => get::run(store, args),
+        Some(ParSubcommands::Move(args)) => r#move::run(store, args),
+        Some(ParSubcommands::Remove(args)) => remove::run(store, args),
+        Some(ParSubcommands::Completions(args)) => {
+            completions::run(args);
+            Ok(())
+        }
+        None => {
+            Par::command().print_help()?;
+            print_tree(&store)?;
+            Ok(())
+        }
+    }
 }
 
 #[cfg(test)]

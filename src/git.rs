@@ -108,8 +108,7 @@ fn run_command(command: &mut Command, store: &Path, inherit_io: bool) -> ParResu
                 .code()
                 .map(|c| c.to_string())
                 .unwrap_or("unknown".to_string())
-        )
-        .into()),
+        )),
         Err(err) => Err(err.into()),
     }
 }

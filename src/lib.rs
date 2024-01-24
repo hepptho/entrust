@@ -1,8 +1,9 @@
-pub(crate) mod backend;
+mod backend;
 pub mod command;
-pub mod error;
-pub(crate) mod generated;
-pub(crate) mod git;
-pub(crate) mod resolve;
-pub(crate) mod theme;
-pub mod tree;
+mod error;
+mod generated;
+mod git;
+mod resolve;
+mod store;
+mod theme;
+mod tree;
