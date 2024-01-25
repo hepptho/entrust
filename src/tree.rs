@@ -1,15 +1,24 @@
 use anyhow::anyhow;
 use color_print::cprintln;
-use std::fs;
+use std::io::IsTerminal;
 use std::path::Path;
+use std::{env, fs, io};
 
 use termtree::Tree;
 
 use crate::error::ParResult;
 
+fn color() -> bool {
+    env::var("NO_COLOR").is_err() && io::stdout().is_terminal()
+}
+
 pub fn print_tree(base: &Path) -> ParResult<()> {
     let tree = tree(base)?;
-    cprintln!("\n<yellow,bold>Password Store:</>");
+    if color() {
+        cprintln!("\n<yellow,bold>Password Store:</>");
+    } else {
+        println!("\nPassword Store:")
+    }
     tree.to_string()
         .lines()
         .skip(1)
