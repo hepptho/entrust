@@ -27,7 +27,11 @@ pub fn add(store: &Path, key: &str) -> ParResult<()> {
             store,
             true,
         )?;
-        run_command(git().args(["commit", "--message", "add", key]), store, true)?;
+        run_command(
+            git().args(["commit", "--message", &format!("add {key}")]),
+            store,
+            true,
+        )?;
     }
     Ok(())
 }
