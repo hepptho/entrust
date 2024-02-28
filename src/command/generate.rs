@@ -1,7 +1,7 @@
 use anyhow::anyhow;
-use std::io;
 use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
+use std::{fs, io};
 
 use copypasta::{ClipboardContext, ClipboardProvider};
 use rand::prelude::SliceRandom;
@@ -57,6 +57,9 @@ fn output(store: &Path, args: GenerateArgs, pass: String) -> ParResult<()> {
         }
         Output::Store(key) => {
             let location = resolve::resolve_new(store, key)?;
+            if let Some(parent) = location.parent() {
+                fs::create_dir_all(parent)?;
+            }
             args.backend.encrypt(pass.as_bytes(), store, &location)?;
             if !args.no_git {
                 git::add(store, key)?;
