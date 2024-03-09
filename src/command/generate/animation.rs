@@ -8,10 +8,7 @@ use std::{io, thread};
 const PLACEHOLDER_CHAR: u8 = b'\0';
 pub(crate) fn animate(pass: &str) {
     let len = pass.len();
-    let mut state = Vec::with_capacity(len);
-    for _ in 0..len {
-        state.push(PLACEHOLDER_CHAR)
-    }
+    let mut state = vec![PLACEHOLDER_CHAR; len];
     while let Some(&i) = missing_indexes(&state).choose(&mut rand::thread_rng()) {
         advance_and_print_state(pass, &mut state, i);
     }

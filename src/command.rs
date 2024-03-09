@@ -41,7 +41,7 @@ const LONG_ABOUT: &str = cstr!("
 #[derive(Parser, Debug)]
 #[command(author, version, about = ABOUT, long_about = LONG_ABOUT, propagate_version = true, bin_name = bin_name(),
 styles = theme::clap_theme())]
-struct Par {
+pub struct ParArgs {
     #[command(subcommand)]
     pub command: Option<ParSubcommands>,
 }
@@ -56,7 +56,7 @@ fn bin_name() -> String {
 }
 
 #[derive(Subcommand, Debug)]
-enum ParSubcommands {
+pub enum ParSubcommands {
     #[command(about = add::ABOUT, long_about = add::LONG_ABOUT, alias = "insert")]
     Add(AddArgs),
     #[command(about = get::ABOUT, long_about = get::LONG_ABOUT, alias = "g")]
@@ -75,8 +75,7 @@ enum ParSubcommands {
     Completions(CompletionsArgs),
 }
 
-pub fn run() -> ParResult<()> {
-    let par = Par::parse();
+pub fn run(par: ParArgs) -> ParResult<()> {
     debug!("{par:#?}");
 
     let store = get_store()?;
@@ -95,7 +94,7 @@ pub fn run() -> ParResult<()> {
             Ok(())
         }
         None => {
-            Par::command().print_help()?;
+            ParArgs::command().print_help()?;
             print_tree(&store)?;
             Ok(())
         }
@@ -110,6 +109,6 @@ mod tests {
 
     #[test]
     fn verify_cli() {
-        Par::command().debug_assert();
+        ParArgs::command().debug_assert();
     }
 }

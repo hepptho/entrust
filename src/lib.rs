@@ -7,3 +7,5 @@ mod resolve;
 mod store;
 mod theme;
 mod tree;
+
+pub use backend::Backend;

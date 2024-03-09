@@ -1,4 +1,4 @@
-use crate::command::Par;
+use crate::command::ParArgs;
 use clap::{Args, CommandFactory};
 use clap_complete::{generate, Shell};
 use std::io;
@@ -11,7 +11,7 @@ pub struct CompletionsArgs {
 }
 
 pub fn run(args: CompletionsArgs) {
-    let cmd = Par::command();
+    let cmd = ParArgs::command();
     generate(
         args.shell,
         &mut cmd.clone(),
