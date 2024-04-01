@@ -31,6 +31,14 @@ impl GenerateArgs {
             Type::Word => 20,
         })
     }
+
+    pub(crate) fn needs_backend(&self) -> Option<Backend> {
+        if self.output.store.is_some() {
+            Some(self.backend)
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(ValueEnum, Clone, Debug)]

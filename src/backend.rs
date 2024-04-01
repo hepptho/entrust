@@ -11,7 +11,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, Read};
 use std::path::Path;
 
-#[derive(ValueEnum, Clone, Debug)]
+#[derive(ValueEnum, Clone, Copy, Debug)]
 pub enum Backend {
     Age,
     Gpg,
@@ -21,11 +21,9 @@ impl Backend {
     pub fn encrypt(&self, mut content: impl Read, store: &Path, out_path: &Path) -> ParResult<()> {
         match self {
             Backend::Age => {
-                self.create_recipient_file_if_not_present(store, "age")?;
                 age::encrypt(&mut content, &self.recipient(store)?, out_path)?;
             }
             Backend::Gpg => {
-                self.create_recipient_file_if_not_present(store, "gpg")?;
                 gpg::encrypt(&mut content, &self.recipient(store)?, out_path)?;
             }
         }
@@ -40,6 +38,13 @@ impl Backend {
         }
     }
 
+    fn display_name(&self) -> &'static str {
+        match self {
+            Backend::Age => "age",
+            Backend::Gpg => "gpg",
+        }
+    }
+
     fn recipient_file_name(&self) -> &'static str {
         match self {
             Backend::Age => age::RECIPIENT_FILE_NAME,
@@ -47,17 +52,25 @@ impl Backend {
         }
     }
 
-    fn create_recipient_file_if_not_present(
-        &self,
-        store: &Path,
-        display_name: &str,
-    ) -> ParResult<()> {
+    pub fn needs_init(self, store: &Path) -> Option<Backend> {
+        if store.join(self.recipient_file_name()).exists() {
+            None
+        } else {
+            Some(self)
+        }
+    }
+
+    pub fn create_recipient_file_if_not_present(&self, store: &Path) -> ParResult<()> {
         let file = store.join(self.recipient_file_name());
         if file.exists() {
             return Ok(());
         }
         let recipient: String = Text::new(
-            format!("{display_name} recipient for which the file should be created ❯").as_str(),
+            format!(
+                "{} recipient for which the file should be created ❯",
+                self.display_name()
+            )
+            .as_str(),
         )
         .with_render_config(*INQUIRE_RENDER_CONFIG)
         .prompt()?;

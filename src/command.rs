@@ -17,12 +17,13 @@ use crate::command::r#move::MoveArgs;
 use crate::command::remove::RemoveArgs;
 use crate::error::ParResult;
 use crate::store::get_store;
-use crate::theme;
 use crate::tree::print_tree;
+use crate::{theme, Backend};
 use clap::{CommandFactory, Parser, Subcommand};
 use color_print::cstr;
 use log::debug;
 use std::env;
+use std::path::Path;
 
 const ABOUT: &str = cstr!(
     "
@@ -75,11 +76,26 @@ pub enum ParSubcommands {
     Completions(CompletionsArgs),
 }
 
+impl ParSubcommands {
+    fn needs_init(&self, store: &Path) -> Option<Backend> {
+        match self {
+            ParSubcommands::Add(args) => args.backend.needs_init(store),
+            ParSubcommands::Edit(args) => args.backend.needs_init(store),
+            ParSubcommands::Generate(args) => {
+                args.needs_backend().and_then(|b| b.needs_init(store))
+            }
+            _ => None,
+        }
+    }
+}
+
 pub fn run(par: ParArgs) -> ParResult<()> {
     debug!("{par:#?}");
 
     let store = get_store()?;
     debug!("store: {store:?}");
+
+    init(par.command.as_ref(), &store)?;
 
     match par.command {
         Some(ParSubcommands::Add(args)) => add::run(store, args),
@@ -99,6 +115,14 @@ pub fn run(par: ParArgs) -> ParResult<()> {
             Ok(())
         }
     }
+}
+
+fn init(subcommand: Option<&ParSubcommands>, store: &Path) -> ParResult<()> {
+    let needs_init = subcommand.and_then(|c| c.needs_init(store));
+    if let Some(backend) = needs_init {
+        backend.create_recipient_file_if_not_present(store)?;
+    }
+    Ok(())
 }
 
 #[cfg(test)]

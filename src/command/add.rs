@@ -29,7 +29,7 @@ pub struct AddArgs {
     key: String,
     /// Choose gpg or age for encryption
     #[arg(short, long, value_enum, default_value_t = Backend::Age)]
-    backend: Backend,
+    pub backend: Backend,
     /// Do not add the new file to git
     #[arg(long = "no-git")]
     no_git: bool,

@@ -28,7 +28,7 @@ pub struct EditArgs {
     key: String,
     /// Choose gpg or age for re-encryption
     #[arg(short, long, value_enum, default_value_t = Backend::Age)]
-    backend: Backend,
+    pub backend: Backend,
 }
 
 pub fn run(store: PathBuf, args: EditArgs) -> ParResult<()> {
