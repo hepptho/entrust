@@ -16,14 +16,13 @@ use crate::command::get::GetArgs;
 use crate::command::r#move::MoveArgs;
 use crate::command::remove::RemoveArgs;
 use crate::error::ParResult;
-use crate::store::get_store;
 use crate::tree::print_tree;
 use crate::{theme, Backend};
 use clap::{CommandFactory, Parser, Subcommand};
 use color_print::cstr;
 use log::debug;
-use std::env;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::{env, fs};
 
 const ABOUT: &str = cstr!(
     "
@@ -45,6 +44,22 @@ styles = theme::clap_theme())]
 pub struct ParArgs {
     #[command(subcommand)]
     pub command: Option<ParSubcommands>,
+    /// The directory in which the passwords are stored
+    #[arg(short, long, env = "PAR_STORE", value_name = "DIR", value_parser = parse_store)]
+    pub store: PathBuf,
+}
+
+fn parse_store(string: &str) -> Result<PathBuf, String> {
+    let buf = PathBuf::from(string);
+    if buf.is_file() {
+        Err(format!("{string} is a file"))
+    } else if buf.exists() {
+        Ok(buf)
+    } else {
+        fs::create_dir_all(&buf)
+            .map(|_| buf)
+            .map_err(|err| err.to_string())
+    }
 }
 
 fn bin_name() -> String {
@@ -92,26 +107,23 @@ impl ParSubcommands {
 pub fn run(par: ParArgs) -> ParResult<()> {
     debug!("{par:#?}");
 
-    let store = get_store()?;
-    debug!("store: {store:?}");
-
-    init(par.command.as_ref(), &store)?;
+    init(par.command.as_ref(), &par.store)?;
 
     match par.command {
-        Some(ParSubcommands::Add(args)) => add::run(store, args),
+        Some(ParSubcommands::Add(args)) => add::run(par.store, args),
         Some(ParSubcommands::ClearClipboard(args)) => clear_clipboard::run(args),
-        Some(ParSubcommands::Edit(args)) => edit::run(store, args),
-        Some(ParSubcommands::Generate(args)) => generate::run(store, args),
-        Some(ParSubcommands::Get(args)) => get::run(store, args),
-        Some(ParSubcommands::Move(args)) => r#move::run(store, args),
-        Some(ParSubcommands::Remove(args)) => remove::run(store, args),
+        Some(ParSubcommands::Edit(args)) => edit::run(par.store, args),
+        Some(ParSubcommands::Generate(args)) => generate::run(par.store, args),
+        Some(ParSubcommands::Get(args)) => get::run(par.store, args),
+        Some(ParSubcommands::Move(args)) => r#move::run(par.store, args),
+        Some(ParSubcommands::Remove(args)) => remove::run(par.store, args),
         Some(ParSubcommands::Completions(args)) => {
             completions::run(args);
             Ok(())
         }
         None => {
             ParArgs::command().print_help()?;
-            print_tree(&store)?;
+            print_tree(&par.store)?;
             Ok(())
         }
     }
