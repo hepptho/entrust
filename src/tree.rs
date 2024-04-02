@@ -6,13 +6,11 @@ use std::{env, fs, io};
 
 use termtree::Tree;
 
-use crate::error::ParResult;
-
 fn color() -> bool {
     env::var("NO_COLOR").is_err() && io::stdout().is_terminal()
 }
 
-pub fn print_tree(base: &Path) -> ParResult<()> {
+pub fn print_tree(base: &Path) -> anyhow::Result<()> {
     let tree = tree(base)?;
     if color() {
         cprintln!("\n<yellow,bold>Password Store:</>");
@@ -26,7 +24,7 @@ pub fn print_tree(base: &Path) -> ParResult<()> {
     Ok(())
 }
 
-fn label<P: AsRef<Path>>(p: P) -> ParResult<String> {
+fn label<P: AsRef<Path>>(p: P) -> anyhow::Result<String> {
     p.as_ref()
         .file_name()
         .and_then(|o| o.to_str())
@@ -34,7 +32,7 @@ fn label<P: AsRef<Path>>(p: P) -> ParResult<String> {
         .ok_or_else(|| anyhow!("Could not read {:?}", p.as_ref()))
 }
 
-fn tree<P: AsRef<Path>>(p: P) -> ParResult<Tree<String>> {
+fn tree<P: AsRef<Path>>(p: P) -> anyhow::Result<Tree<String>> {
     fs::read_dir(&p)?
         .filter_map(|e| e.ok())
         .filter(|e| {

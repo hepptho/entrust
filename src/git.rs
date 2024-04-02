@@ -1,10 +1,9 @@
-use crate::error::ParResult;
 use anyhow::anyhow;
 use log::debug;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
-pub fn init(store: &Path) -> ParResult<()> {
+pub fn init(store: &Path) -> anyhow::Result<()> {
     run_command(
         git().args(["init", "--initial-branch", "main"]),
         store,
@@ -19,7 +18,7 @@ pub fn init(store: &Path) -> ParResult<()> {
     Ok(())
 }
 
-pub fn add(store: &Path, key: &str) -> ParResult<()> {
+pub fn add(store: &Path, key: &str) -> anyhow::Result<()> {
     debug!("git add(store: {store:?}, key: {key})");
     if has_repository(store) {
         run_command(
@@ -36,7 +35,7 @@ pub fn add(store: &Path, key: &str) -> ParResult<()> {
     Ok(())
 }
 
-pub fn edit(store: &Path, key: &str) -> ParResult<()> {
+pub fn edit(store: &Path, key: &str) -> anyhow::Result<()> {
     if has_repository(store) && is_file_tracked(store, key) {
         run_command(
             git().arg("add").arg(store.join(key).as_os_str()),
@@ -52,7 +51,7 @@ pub fn edit(store: &Path, key: &str) -> ParResult<()> {
     Ok(())
 }
 
-pub fn r#move(store: &Path, from_key: &str, to_key: &str) -> ParResult<bool> {
+pub fn r#move(store: &Path, from_key: &str, to_key: &str) -> anyhow::Result<bool> {
     if has_repository(store) && is_file_tracked(store, from_key) {
         run_command(
             git()
@@ -77,7 +76,7 @@ pub fn r#move(store: &Path, from_key: &str, to_key: &str) -> ParResult<bool> {
     }
 }
 
-pub fn remove(store: &Path, key: &str) -> ParResult<()> {
+pub fn remove(store: &Path, key: &str) -> anyhow::Result<()> {
     if has_repository(store) && is_file_tracked(store, key) {
         run_command(
             git().arg("rm").arg(store.join(key).as_os_str()),
@@ -93,7 +92,7 @@ pub fn remove(store: &Path, key: &str) -> ParResult<()> {
     Ok(())
 }
 
-fn run_command(command: &mut Command, store: &Path, inherit_io: bool) -> ParResult<()> {
+fn run_command(command: &mut Command, store: &Path, inherit_io: bool) -> anyhow::Result<()> {
     let stdio = || match inherit_io {
         true => Stdio::inherit(),
         false => Stdio::null(),

@@ -8,7 +8,6 @@ use rand::prelude::SliceRandom;
 
 use crate::command::generate::animation::animate;
 use crate::command::generate::parse::{GenerateArgs, Output, Type};
-use crate::error::ParResult;
 use crate::generated::wordlist::WORDLIST;
 use crate::{git, resolve};
 
@@ -19,13 +18,13 @@ pub(crate) const ABOUT: &str = "Generate a random password";
 
 const PRINTABLE_ASCII: &str = r#"!"$#%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~"#;
 
-pub fn run(store: PathBuf, args: GenerateArgs) -> ParResult<()> {
+pub fn run(store: PathBuf, args: GenerateArgs) -> anyhow::Result<()> {
     let pass = generate_pass(&args)?;
     output(&store, args, pass)?;
     Ok(())
 }
 
-fn generate_pass(args: &GenerateArgs) -> ParResult<String> {
+fn generate_pass(args: &GenerateArgs) -> anyhow::Result<String> {
     let pass = match args.r#type {
         Type::Phrase => {
             let phrase_iterable = (0..args.length()).map(|_| random_word());
@@ -39,7 +38,7 @@ fn generate_pass(args: &GenerateArgs) -> ParResult<String> {
     Ok(pass)
 }
 
-fn output(store: &Path, args: GenerateArgs, pass: String) -> ParResult<()> {
+fn output(store: &Path, args: GenerateArgs, pass: String) -> anyhow::Result<()> {
     match args.output.output() {
         Output::Stdout => {
             if !args.no_anim && io::stdout().is_terminal() {

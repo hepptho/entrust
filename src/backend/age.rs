@@ -6,15 +6,17 @@ use std::{env, io};
 use anyhow::anyhow;
 use log::debug;
 
-use crate::error::ParResult;
-
 pub(super) const RECIPIENT_FILE_NAME: &str = ".age-id";
 
 fn identity_file() -> Option<String> {
     env::var("AGE_IDENTITY").ok()
 }
 
-pub(super) fn encrypt(content: &mut impl Read, recipient: &str, out_path: &Path) -> ParResult<()> {
+pub(super) fn encrypt(
+    content: &mut impl Read,
+    recipient: &str,
+    out_path: &Path,
+) -> anyhow::Result<()> {
     let mut child = Command::new("age")
         .arg("--encrypt")
         .arg("--armor")
@@ -31,7 +33,7 @@ pub(super) fn encrypt(content: &mut impl Read, recipient: &str, out_path: &Path)
     Ok(())
 }
 
-pub(super) fn decrypt(path: &Path) -> ParResult<String> {
+pub(super) fn decrypt(path: &Path) -> anyhow::Result<String> {
     let has_input = !io::stdin().is_terminal();
     debug!("has_input: {has_input}");
     let cmd_identity = if has_input {

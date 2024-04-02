@@ -1,8 +1,8 @@
 mod backend;
 pub mod command;
-mod error;
 mod generated;
 mod git;
+mod init;
 mod resolve;
 mod theme;
 mod tree;

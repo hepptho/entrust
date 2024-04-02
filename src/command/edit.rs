@@ -7,7 +7,6 @@ use crossterm::style::Stylize;
 
 use crate::backend::Backend;
 use crate::command::add::read_password_interactive;
-use crate::error::ParResult;
 use crate::git;
 use crate::resolve::resolve_existing;
 
@@ -31,7 +30,7 @@ pub struct EditArgs {
     pub backend: Backend,
 }
 
-pub fn run(store: PathBuf, args: EditArgs) -> ParResult<()> {
+pub fn run(store: PathBuf, args: EditArgs) -> anyhow::Result<()> {
     let location = resolve_existing(&store, &args.key, false)?;
 
     let mut bak = location.clone();

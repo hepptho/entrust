@@ -1,4 +1,3 @@
-use crate::error::ParResult;
 use crate::git;
 use crate::resolve::{resolve_existing, resolve_new};
 use clap::Args;
@@ -15,7 +14,7 @@ pub struct MoveArgs {
     to: String,
 }
 
-pub fn run(store: PathBuf, args: MoveArgs) -> ParResult<()> {
+pub fn run(store: PathBuf, args: MoveArgs) -> anyhow::Result<()> {
     let from_location = resolve_existing(&store, &args.from, true)?;
     let to_location = resolve_new(&store, &args.to)?;
     if let Some(dir) = to_location.parent() {

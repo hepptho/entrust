@@ -1,4 +1,3 @@
-use crate::error::ParResult;
 use crate::git;
 use crate::resolve::resolve_existing;
 use anyhow::anyhow;
@@ -18,7 +17,7 @@ pub struct RemoveArgs {
     recurse: bool,
 }
 
-pub fn run(store: PathBuf, args: RemoveArgs) -> ParResult<()> {
+pub fn run(store: PathBuf, args: RemoveArgs) -> anyhow::Result<()> {
     let location = resolve_existing(&store, &args.key, true)?;
     let is_dir = location.is_dir();
     if is_dir && !args.recurse {

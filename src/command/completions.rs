@@ -11,11 +11,7 @@ pub struct CompletionsArgs {
 }
 
 pub fn run(args: CompletionsArgs) {
-    let cmd = ParArgs::command();
-    generate(
-        args.shell,
-        &mut cmd.clone(),
-        cmd.get_bin_name().unwrap_or(cmd.get_name()),
-        &mut io::stdout(),
-    );
+    let mut cmd = ParArgs::command();
+    let bin_name = cmd.get_bin_name().unwrap_or(cmd.get_name()).to_string();
+    generate(args.shell, &mut cmd, bin_name, &mut io::stdout());
 }

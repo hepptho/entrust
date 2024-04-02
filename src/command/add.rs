@@ -9,7 +9,6 @@ use inquire::PasswordDisplayMode;
 use log::{debug, info};
 
 use crate::backend::Backend;
-use crate::error::ParResult;
 use crate::theme::INQUIRE_RENDER_CONFIG;
 use crate::{git, resolve};
 
@@ -35,7 +34,7 @@ pub struct AddArgs {
     no_git: bool,
 }
 
-pub fn run(store: PathBuf, args: AddArgs) -> ParResult<()> {
+pub fn run(store: PathBuf, args: AddArgs) -> anyhow::Result<()> {
     debug!("add run");
     encrypt(&store, &args)?;
     if !args.no_git {
@@ -45,7 +44,7 @@ pub fn run(store: PathBuf, args: AddArgs) -> ParResult<()> {
     Ok(())
 }
 
-fn encrypt(store: &Path, args: &AddArgs) -> ParResult<()> {
+fn encrypt(store: &Path, args: &AddArgs) -> anyhow::Result<()> {
     let location = resolve::resolve_new(store, &args.key)?;
     debug!("Location: {:?}", location);
     if let Some(parent) = location.parent() {
@@ -62,7 +61,7 @@ fn encrypt(store: &Path, args: &AddArgs) -> ParResult<()> {
     Ok(())
 }
 
-pub(crate) fn read_password_interactive() -> ParResult<String> {
+pub(crate) fn read_password_interactive() -> anyhow::Result<String> {
     let pass = inquire::Password::new("Enter new Password ❯")
         .with_render_config(*INQUIRE_RENDER_CONFIG)
         .with_custom_confirmation_message("Confirm password ❯")

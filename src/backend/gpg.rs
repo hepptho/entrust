@@ -1,4 +1,3 @@
-use crate::error::ParResult;
 use std::io;
 use std::io::Read;
 use std::path::Path;
@@ -6,7 +5,11 @@ use std::process::{Command, Stdio};
 
 pub(super) const RECIPIENT_FILE_NAME: &str = ".gpg-id";
 
-pub(super) fn encrypt(content: &mut impl Read, recipient: &str, out_path: &Path) -> ParResult<()> {
+pub(super) fn encrypt(
+    content: &mut impl Read,
+    recipient: &str,
+    out_path: &Path,
+) -> anyhow::Result<()> {
     let mut child = Command::new("gpg")
         .arg("--encrypt")
         .arg("--armor")
@@ -24,7 +27,7 @@ pub(super) fn encrypt(content: &mut impl Read, recipient: &str, out_path: &Path)
     Ok(())
 }
 
-pub(super) fn decrypt(path: &Path) -> ParResult<String> {
+pub(super) fn decrypt(path: &Path) -> anyhow::Result<String> {
     let output = Command::new("gpg")
         .arg("--decrypt")
         .arg("--quiet")

@@ -15,13 +15,12 @@ use crate::command::generate::parse::GenerateArgs;
 use crate::command::get::GetArgs;
 use crate::command::r#move::MoveArgs;
 use crate::command::remove::RemoveArgs;
-use crate::error::ParResult;
 use crate::tree::print_tree;
-use crate::{theme, Backend};
+use crate::{init, theme};
 use clap::{CommandFactory, Parser, Subcommand};
 use color_print::cstr;
 use log::debug;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::{env, fs};
 
 const ABOUT: &str = cstr!(
@@ -43,7 +42,7 @@ const LONG_ABOUT: &str = cstr!("
 styles = theme::clap_theme())]
 pub struct ParArgs {
     #[command(subcommand)]
-    pub command: Option<ParSubcommands>,
+    pub command: Option<ParSubcommand>,
     /// The directory in which the passwords are stored
     #[arg(short, long, env = "PAR_STORE", value_name = "DIR", value_parser = parse_store)]
     pub store: PathBuf,
@@ -72,7 +71,7 @@ fn bin_name() -> String {
 }
 
 #[derive(Subcommand, Debug)]
-pub enum ParSubcommands {
+pub enum ParSubcommand {
     #[command(about = add::ABOUT, long_about = add::LONG_ABOUT, alias = "insert")]
     Add(AddArgs),
     #[command(about = get::ABOUT, long_about = get::LONG_ABOUT, alias = "g")]
@@ -91,33 +90,20 @@ pub enum ParSubcommands {
     Completions(CompletionsArgs),
 }
 
-impl ParSubcommands {
-    fn needs_init(&self, store: &Path) -> Option<Backend> {
-        match self {
-            ParSubcommands::Add(args) => args.backend.needs_init(store),
-            ParSubcommands::Edit(args) => args.backend.needs_init(store),
-            ParSubcommands::Generate(args) => {
-                args.needs_backend().and_then(|b| b.needs_init(store))
-            }
-            _ => None,
-        }
-    }
-}
-
-pub fn run(par: ParArgs) -> ParResult<()> {
+pub fn run(par: ParArgs) -> anyhow::Result<()> {
     debug!("{par:#?}");
 
-    init(par.command.as_ref(), &par.store)?;
+    init::init(par.command.as_ref(), &par.store)?;
 
     match par.command {
-        Some(ParSubcommands::Add(args)) => add::run(par.store, args),
-        Some(ParSubcommands::ClearClipboard(args)) => clear_clipboard::run(args),
-        Some(ParSubcommands::Edit(args)) => edit::run(par.store, args),
-        Some(ParSubcommands::Generate(args)) => generate::run(par.store, args),
-        Some(ParSubcommands::Get(args)) => get::run(par.store, args),
-        Some(ParSubcommands::Move(args)) => r#move::run(par.store, args),
-        Some(ParSubcommands::Remove(args)) => remove::run(par.store, args),
-        Some(ParSubcommands::Completions(args)) => {
+        Some(ParSubcommand::Add(args)) => add::run(par.store, args),
+        Some(ParSubcommand::ClearClipboard(args)) => clear_clipboard::run(args),
+        Some(ParSubcommand::Edit(args)) => edit::run(par.store, args),
+        Some(ParSubcommand::Generate(args)) => generate::run(par.store, args),
+        Some(ParSubcommand::Get(args)) => get::run(par.store, args),
+        Some(ParSubcommand::Move(args)) => r#move::run(par.store, args),
+        Some(ParSubcommand::Remove(args)) => remove::run(par.store, args),
+        Some(ParSubcommand::Completions(args)) => {
             completions::run(args);
             Ok(())
         }
@@ -127,14 +113,6 @@ pub fn run(par: ParArgs) -> ParResult<()> {
             Ok(())
         }
     }
-}
-
-fn init(subcommand: Option<&ParSubcommands>, store: &Path) -> ParResult<()> {
-    let needs_init = subcommand.and_then(|c| c.needs_init(store));
-    if let Some(backend) = needs_init {
-        backend.create_recipient_file_if_not_present(store)?;
-    }
-    Ok(())
 }
 
 #[cfg(test)]

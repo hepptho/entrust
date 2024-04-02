@@ -1,6 +1,5 @@
 use crate::backend::Backend;
 use crate::command::clear_clipboard;
-use crate::error::ParResult;
 use crate::resolve::{get_existing_locations, resolve_existing};
 use crate::theme::INQUIRE_RENDER_CONFIG;
 use anyhow::anyhow;
@@ -39,7 +38,7 @@ pub struct GetArgs {
     clear_clipboard_delay: u32,
 }
 
-pub fn run(store: PathBuf, args: GetArgs) -> ParResult<()> {
+pub fn run(store: PathBuf, args: GetArgs) -> anyhow::Result<()> {
     let location = get_location(&store, &args.key)?;
     let decrypted = Backend::decrypt(&location)?;
     if args.clipboard {
@@ -56,14 +55,14 @@ pub fn run(store: PathBuf, args: GetArgs) -> ParResult<()> {
     Ok(())
 }
 
-fn get_location(store: &Path, key: &Option<String>) -> ParResult<PathBuf> {
+fn get_location(store: &Path, key: &Option<String>) -> anyhow::Result<PathBuf> {
     match key {
         Some(k) => resolve_existing(store, k, false),
         None => select_key(store).map(|k| store.join(k)),
     }
 }
 
-fn select_key(store: &Path) -> ParResult<String> {
+fn select_key(store: &Path) -> anyhow::Result<String> {
     let vec = get_existing_locations(store)?;
     let selected = Select::new("Select key", vec)
         .with_render_config(*INQUIRE_RENDER_CONFIG)
