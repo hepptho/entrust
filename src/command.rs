@@ -17,9 +17,10 @@ use crate::command::r#move::MoveArgs;
 use crate::command::remove::RemoveArgs;
 use crate::tree::print_tree;
 use crate::{init, theme};
-use clap::{CommandFactory, Parser, Subcommand};
+use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
 use color_print::cstr;
 use log::debug;
+use par_core::Backend;
 use std::path::PathBuf;
 use std::{env, fs};
 
@@ -44,7 +45,7 @@ pub struct ParArgs {
     #[command(subcommand)]
     pub command: Option<ParSubcommand>,
     /// The directory in which the passwords are stored
-    #[arg(short, long, env = "PAR_STORE", value_name = "DIR", value_parser = parse_store)]
+    #[arg(short, long, env = par_core::PAR_STORE_ENV_VAR, value_name = "DIR", value_parser = parse_store)]
     pub store: PathBuf,
 }
 
@@ -111,6 +112,21 @@ pub fn run(par: ParArgs) -> anyhow::Result<()> {
             ParArgs::command().print_help()?;
             print_tree(&par.store)?;
             Ok(())
+        }
+    }
+}
+
+#[derive(ValueEnum, Clone, Copy, Debug)]
+pub enum BackendValueEnum {
+    Age,
+    Gpg,
+}
+
+impl From<BackendValueEnum> for Backend {
+    fn from(value: BackendValueEnum) -> Self {
+        match value {
+            BackendValueEnum::Age => Backend::Age,
+            BackendValueEnum::Gpg => Backend::Gpg,
         }
     }
 }

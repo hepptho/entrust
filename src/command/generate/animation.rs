@@ -1,5 +1,5 @@
-use crate::command::generate::random_ascii;
 use crossterm::style::Stylize;
+use par_core;
 use rand::prelude::SliceRandom;
 use std::io::Write;
 use std::time::Duration;
@@ -18,7 +18,7 @@ fn advance_and_print_state(pass: &str, state: &mut [u8], i: usize) {
     state[i] = pass.as_bytes()[i];
     let s = state.iter().fold(String::new(), |mut acc, &elem| {
         if elem == PLACEHOLDER_CHAR {
-            acc.push(random_ascii() as char);
+            acc.push(par_core::random_ascii());
         } else {
             acc.push_str(format!("{}", (elem as char).bold()).as_str());
         }

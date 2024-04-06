@@ -1,6 +1,6 @@
-use crate::git;
-use crate::resolve::{resolve_existing, resolve_new};
 use clap::Args;
+use par_core::git;
+use par_core::{resolve_existing_location, resolve_new_location};
 use std::fs;
 use std::path::PathBuf;
 
@@ -15,8 +15,8 @@ pub struct MoveArgs {
 }
 
 pub fn run(store: PathBuf, args: MoveArgs) -> anyhow::Result<()> {
-    let from_location = resolve_existing(&store, &args.from, true)?;
-    let to_location = resolve_new(&store, &args.to)?;
+    let from_location = resolve_existing_location(&store, &args.from, true)?;
+    let to_location = resolve_new_location(&store, &args.to)?;
     if let Some(dir) = to_location.parent() {
         fs::create_dir_all(dir)?;
     }

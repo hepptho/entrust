@@ -1,7 +1,7 @@
-use crate::git;
-use crate::resolve::resolve_existing;
 use anyhow::anyhow;
 use clap::Args;
+use par_core::git;
+use par_core::resolve_existing_location;
 use std::fs;
 use std::path::PathBuf;
 
@@ -18,7 +18,7 @@ pub struct RemoveArgs {
 }
 
 pub fn run(store: PathBuf, args: RemoveArgs) -> anyhow::Result<()> {
-    let location = resolve_existing(&store, &args.key, true)?;
+    let location = resolve_existing_location(&store, &args.key, true)?;
     let is_dir = location.is_dir();
     if is_dir && !args.recurse {
         return Err(anyhow!(

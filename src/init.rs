@@ -1,7 +1,7 @@
 use crate::command::ParSubcommand;
 use crate::theme::INQUIRE_RENDER_CONFIG;
-use crate::Backend;
 use inquire::Text;
+use par_core::Backend;
 use std::fs;
 use std::path::Path;
 
@@ -15,8 +15,8 @@ pub fn init(subcommand: Option<&ParSubcommand>, store: &Path) -> anyhow::Result<
 
 fn needs_init(subcommand: &ParSubcommand, store: &Path) -> Option<Backend> {
     match subcommand {
-        ParSubcommand::Add(args) => args.backend.needs_init(store),
-        ParSubcommand::Edit(args) => args.backend.needs_init(store),
+        ParSubcommand::Add(args) => Backend::from(args.backend).needs_init(store),
+        ParSubcommand::Edit(args) => Backend::from(args.backend).needs_init(store),
         ParSubcommand::Generate(args) => args.needs_backend().and_then(|b| b.needs_init(store)),
         _ => None,
     }

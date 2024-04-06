@@ -1,13 +1,12 @@
-pub(crate) mod age;
-pub(crate) mod gpg;
+pub mod age;
+pub mod gpg;
 
 use anyhow::anyhow;
-use clap::ValueEnum;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read};
 use std::path::Path;
 
-#[derive(ValueEnum, Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum Backend {
     Age,
     Gpg,

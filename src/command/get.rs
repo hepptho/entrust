@@ -1,12 +1,11 @@
-use crate::backend::Backend;
 use crate::command::clear_clipboard;
-use crate::resolve::{get_existing_locations, resolve_existing};
 use crate::theme::INQUIRE_RENDER_CONFIG;
 use anyhow::anyhow;
 use clap::Args;
 use color_print::cstr;
 use copypasta::{ClipboardContext, ClipboardProvider};
 use inquire::Select;
+use par_core::{get_existing_locations, resolve_existing_location, Backend};
 use std::io;
 use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
@@ -57,7 +56,7 @@ pub fn run(store: PathBuf, args: GetArgs) -> anyhow::Result<()> {
 
 fn get_location(store: &Path, key: &Option<String>) -> anyhow::Result<PathBuf> {
     match key {
-        Some(k) => resolve_existing(store, k, false),
+        Some(k) => resolve_existing_location(store, k, false),
         None => select_key(store).map(|k| store.join(k)),
     }
 }

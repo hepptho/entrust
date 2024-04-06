@@ -1,7 +1,7 @@
 use std::{fs, io};
 
 const IN: &str = "eff_large.wordlist";
-const OUT: &str = "src/generated/wordlist.rs";
+const OUT: &str = "src/generate/wordlist.rs";
 
 fn main() -> io::Result<()> {
     println!("cargo:rerun-if-changed={IN}");

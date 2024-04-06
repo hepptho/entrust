@@ -6,17 +6,13 @@ use std::{env, io};
 use anyhow::anyhow;
 use log::debug;
 
-pub(super) const RECIPIENT_FILE_NAME: &str = ".age-id";
+pub const RECIPIENT_FILE_NAME: &str = ".age-id";
 
 fn identity_file() -> Option<String> {
     env::var("AGE_IDENTITY").ok()
 }
 
-pub(super) fn encrypt(
-    content: &mut impl Read,
-    recipient: &str,
-    out_path: &Path,
-) -> anyhow::Result<()> {
+pub fn encrypt(content: &mut impl Read, recipient: &str, out_path: &Path) -> anyhow::Result<()> {
     let mut child = Command::new("age")
         .arg("--encrypt")
         .arg("--armor")
@@ -33,7 +29,7 @@ pub(super) fn encrypt(
     Ok(())
 }
 
-pub(super) fn decrypt(path: &Path) -> anyhow::Result<String> {
+pub fn decrypt(path: &Path) -> anyhow::Result<String> {
     let has_input = !io::stdin().is_terminal();
     debug!("has_input: {has_input}");
     let cmd_identity = if has_input {

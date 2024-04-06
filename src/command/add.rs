@@ -8,9 +8,11 @@ use inquire::validator::Validation;
 use inquire::PasswordDisplayMode;
 use log::{debug, info};
 
-use crate::backend::Backend;
+use par_core;
+use par_core::{git, Backend};
+
+use crate::command::BackendValueEnum;
 use crate::theme::INQUIRE_RENDER_CONFIG;
-use crate::{git, resolve};
 
 pub(super) const ABOUT: &str = "Add a new password";
 
@@ -27,8 +29,8 @@ pub struct AddArgs {
     /// The key under which to store the encrypted file
     key: String,
     /// Choose gpg or age for encryption
-    #[arg(short, long, value_enum, default_value_t = Backend::Age)]
-    pub backend: Backend,
+    #[arg(short, long, value_enum, default_value_t = BackendValueEnum::Age)]
+    pub backend: BackendValueEnum,
     /// Do not add the new file to git
     #[arg(long = "no-git")]
     no_git: bool,
@@ -45,7 +47,7 @@ pub fn run(store: PathBuf, args: AddArgs) -> anyhow::Result<()> {
 }
 
 fn encrypt(store: &Path, args: &AddArgs) -> anyhow::Result<()> {
-    let location = resolve::resolve_new(store, &args.key)?;
+    let location = par_core::resolve_new_location(store, &args.key)?;
     debug!("Location: {:?}", location);
     if let Some(parent) = location.parent() {
         fs::create_dir_all(parent)?;
@@ -57,7 +59,7 @@ fn encrypt(store: &Path, args: &AddArgs) -> anyhow::Result<()> {
         io::stdin().read_to_string(&mut input)?;
         input
     };
-    args.backend.encrypt(input.as_bytes(), store, &location)?;
+    Backend::from(args.backend).encrypt(input.as_bytes(), store, &location)?;
     Ok(())
 }
 

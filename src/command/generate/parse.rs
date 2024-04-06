@@ -1,5 +1,6 @@
-use crate::backend::Backend;
+use crate::command::BackendValueEnum;
 use clap::{Args, ValueEnum};
+use par_core::Backend;
 
 #[derive(Args, Debug)]
 pub struct GenerateArgs {
@@ -20,8 +21,8 @@ pub struct GenerateArgs {
     #[arg(short, long)]
     pub(crate) no_anim: bool,
     /// Choose gpg or age for en-/decryption
-    #[arg(short, long, value_enum, default_value_t = Backend::Age)]
-    pub(crate) backend: Backend,
+    #[arg(short, long, value_enum, default_value_t = BackendValueEnum::Age)]
+    pub(crate) backend: BackendValueEnum,
 }
 
 impl GenerateArgs {
@@ -34,7 +35,7 @@ impl GenerateArgs {
 
     pub(crate) fn needs_backend(&self) -> Option<Backend> {
         if self.output.store.is_some() {
-            Some(self.backend)
+            Some(self.backend.into())
         } else {
             None
         }

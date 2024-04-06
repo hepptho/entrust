@@ -28,7 +28,11 @@ pub fn get_existing_locations(base: &Path) -> anyhow::Result<Vec<String>> {
     Ok(ret)
 }
 
-pub fn resolve_existing(base: &Path, key: &str, can_be_dir: bool) -> anyhow::Result<PathBuf> {
+pub fn resolve_existing_location(
+    base: &Path,
+    key: &str,
+    can_be_dir: bool,
+) -> anyhow::Result<PathBuf> {
     let concat = base.join(key);
     if can_be_dir {
         return if concat.exists() {
@@ -57,7 +61,7 @@ pub fn resolve_existing(base: &Path, key: &str, can_be_dir: bool) -> anyhow::Res
     Err(anyhow!("Key {key} does not exist"))
 }
 
-pub fn resolve_new(base: &Path, key: &str) -> anyhow::Result<PathBuf> {
+pub fn resolve_new_location(base: &Path, key: &str) -> anyhow::Result<PathBuf> {
     let file = base.join(key);
     if file.exists() {
         Err(anyhow!("Key {key} already exists"))

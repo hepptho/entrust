@@ -594,9 +594,20 @@ dependencies = [
  "itertools",
  "log",
  "once_cell",
- "pathdiff",
+ "par-core",
  "rand",
  "termtree",
+]
+
+[[package]]
+name = "par-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "itertools",
+ "log",
+ "pathdiff",
+ "rand",
  "walkdir",
 ]
 
