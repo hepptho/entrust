@@ -45,13 +45,12 @@ pub fn resolve_existing_location(
         return Ok(concat);
     }
     if concat.is_dir() {
-        return Err(anyhow!("{key} is a directory"));
-    };
-    if concat.is_dir() {
         let pass = concat.join("pass");
-        if pass.is_file() {
-            return Ok(pass);
-        }
+        return if pass.is_file() {
+            Ok(pass)
+        } else {
+            Err(anyhow!("{key} is a directory"))
+        };
     }
     let existing = get_existing_locations(base)?;
     let candidates: Vec<_> = existing.iter().filter(|&s| s.starts_with(key)).collect();
