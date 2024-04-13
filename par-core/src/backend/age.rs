@@ -1,11 +1,12 @@
 mod identity;
 
+use std::io;
 use std::io::Read;
 use std::path::Path;
 use std::process::{Command, Stdio};
-use std::{env, io};
 
 use crate::age::identity::{identity_file, read_identity_or_get_cached};
+use crate::backend::{exit_status_to_result, output_to_result};
 use anyhow::anyhow;
 use log::debug;
 
@@ -24,8 +25,8 @@ pub fn encrypt(content: &mut impl Read, recipient: &str, out_path: &Path) -> any
     let mut child_stdin = child.stdin.take().unwrap();
     io::copy(content, &mut child_stdin)?;
     drop(child_stdin);
-    child.wait()?;
-    Ok(())
+    let exit_status = child.wait()?;
+    exit_status_to_result(exit_status, "age")
 }
 
 pub fn decrypt(path: &Path) -> anyhow::Result<String> {
@@ -44,7 +45,7 @@ pub fn decrypt(path: &Path) -> anyhow::Result<String> {
         .arg(path.as_os_str())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::inherit())
+        .stderr(Stdio::piped())
         .spawn()?;
     let mut child_stdin = child.stdin.take().unwrap();
     let content = if let Some(identity) = identity_from_stdin {
@@ -55,5 +56,5 @@ pub fn decrypt(path: &Path) -> anyhow::Result<String> {
     io::copy(&mut content.as_slice(), &mut child_stdin)?;
     drop(child_stdin);
     let output = child.wait_with_output()?;
-    Ok(String::from_utf8(output.stdout)?)
+    output_to_result(output)
 }

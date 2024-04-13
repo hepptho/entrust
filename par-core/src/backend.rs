@@ -5,6 +5,7 @@ use anyhow::anyhow;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read};
 use std::path::Path;
+use std::process::{ExitStatus, Output};
 
 #[derive(Clone, Copy, Debug)]
 pub enum Backend {
@@ -81,4 +82,26 @@ fn read_first_line(path: &Path) -> anyhow::Result<String> {
         .next()
         .ok_or(anyhow!("{path:?} is empty"))??;
     Ok(first_line)
+}
+
+fn exit_status_to_result(exit_status: ExitStatus, bin_name: &str) -> anyhow::Result<()> {
+    if exit_status.success() {
+        Ok(())
+    } else {
+        Err(anyhow!(
+            "{bin_name} failed with exit code {}",
+            exit_status
+                .code()
+                .map(|c| c.to_string())
+                .unwrap_or_else(|| "<unknown>".to_string())
+        ))
+    }
+}
+
+fn output_to_result(output: Output) -> anyhow::Result<String> {
+    if output.status.success() {
+        Ok(String::from_utf8(output.stdout)?)
+    } else {
+        Err(anyhow!(String::from_utf8(output.stderr)?))
+    }
 }

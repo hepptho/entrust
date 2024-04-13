@@ -1,3 +1,4 @@
+use crate::backend::{exit_status_to_result, output_to_result};
 use std::io;
 use std::io::Read;
 use std::path::Path;
@@ -19,8 +20,8 @@ pub fn encrypt(content: &mut impl Read, recipient: &str, out_path: &Path) -> any
     let mut child_stdin = child.stdin.take().unwrap();
     io::copy(content, &mut child_stdin)?;
     drop(child_stdin);
-    child.wait()?;
-    Ok(())
+    let exit_status = child.wait()?;
+    exit_status_to_result(exit_status, "gpg")
 }
 
 pub fn decrypt(path: &Path) -> anyhow::Result<String> {
@@ -29,7 +30,6 @@ pub fn decrypt(path: &Path) -> anyhow::Result<String> {
         .arg("--quiet")
         .arg(path.as_os_str())
         .stdin(Stdio::inherit())
-        .stderr(Stdio::inherit())
         .output()?;
-    Ok(String::from_utf8(output.stdout)?)
+    output_to_result(output)
 }
