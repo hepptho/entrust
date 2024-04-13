@@ -1,16 +1,15 @@
-use std::io::{IsTerminal, Read};
+mod identity;
+
+use std::io::Read;
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::{env, io};
 
+use crate::age::identity::{identity_file, read_identity_or_get_cached};
 use anyhow::anyhow;
 use log::debug;
 
 pub const RECIPIENT_FILE_NAME: &str = ".age-id";
-
-fn identity_file() -> Option<String> {
-    env::var("AGE_IDENTITY").ok()
-}
 
 pub fn encrypt(content: &mut impl Read, recipient: &str, out_path: &Path) -> anyhow::Result<()> {
     let mut child = Command::new("age")
@@ -30,21 +29,31 @@ pub fn encrypt(content: &mut impl Read, recipient: &str, out_path: &Path) -> any
 }
 
 pub fn decrypt(path: &Path) -> anyhow::Result<String> {
-    let has_input = !io::stdin().is_terminal();
-    debug!("has_input: {has_input}");
-    let cmd_identity = if has_input {
+    let identity_from_stdin = read_identity_or_get_cached()?;
+
+    let cmd_identity = if identity_from_stdin.is_some() {
         "-".to_string()
     } else {
         identity_file().ok_or(anyhow!("No age identity provided"))?
     };
     debug!("cmd_identity: {cmd_identity}");
-    let output = Command::new("age")
+    let mut child = Command::new("age")
         .arg("--decrypt")
         .arg("--identity")
         .arg(cmd_identity)
         .arg(path.as_os_str())
-        .stdin(Stdio::inherit())
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
         .stderr(Stdio::inherit())
-        .output()?;
+        .spawn()?;
+    let mut child_stdin = child.stdin.take().unwrap();
+    let content = if let Some(identity) = identity_from_stdin {
+        identity.clone()
+    } else {
+        vec![]
+    };
+    io::copy(&mut content.as_slice(), &mut child_stdin)?;
+    drop(child_stdin);
+    let output = child.wait_with_output()?;
     Ok(String::from_utf8(output.stdout)?)
 }
