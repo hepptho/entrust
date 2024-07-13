@@ -12,3 +12,6 @@ lto = "fat"
 opt-level = "z"
 panic = "abort"
 strip = "debuginfo"
+
+[workspace.dependencies]
+itertools = "0.13.0"
