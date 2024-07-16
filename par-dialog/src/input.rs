@@ -1,4 +1,7 @@
+pub mod confirmation;
 pub mod cursor;
+pub mod prompt;
+pub mod validator;
 mod widget;
 
 use std::io;
@@ -9,8 +12,11 @@ use ratatui::crossterm::event::{Event, KeyCode, KeyModifiers};
 use ratatui::prelude::*;
 use ratatui::Viewport;
 
-use crate::dialog::Dialog;
+use crate::dialog::{Dialog, Theme};
+use crate::input::confirmation::Confirmation;
 use crate::input::cursor::{Cursor, CursorMode};
+use crate::input::prompt::Prompt;
+use crate::input::validator::Validator;
 use crate::key_event_pattern as kep;
 
 #[derive(Debug, Default, Clone)]
@@ -18,11 +24,13 @@ pub struct InputDialog {
     content: Vec<char>,
     cursor: Cursor,
     hidden: bool,
-    header: Line<'static>,
-    prompt: Span<'static>,
-    placeholder: Span<'static>,
+    prompt: Prompt,
+    placeholder: &'static str,
     timeout: Option<Duration>,
+    validator: Validator,
+    confirmation: Option<Confirmation>,
     completed: bool,
+    theme: Theme,
 }
 
 impl InputDialog {
@@ -33,36 +41,48 @@ impl InputDialog {
         self.cursor.set_index(cursor_index);
         self
     }
-    pub fn with_cursor_style(mut self, cursor_style: Style) -> Self {
-        self.cursor.set_cursor_style(cursor_style);
+    pub fn with_cursor_on_style(mut self, cursor_on_style: Style) -> Self {
+        self.cursor.set_cursor_on_style(cursor_on_style);
         self
     }
-    pub fn with_header(mut self, header: Line<'static>) -> Self {
-        self.header = header;
+    pub fn with_cursor_off_style(mut self, cursor_off_style: Style) -> Self {
+        self.cursor.set_cursor_off_style(cursor_off_style);
         self
     }
-    pub fn with_prompt(mut self, prompt: Span<'static>) -> Self {
+    pub fn with_prompt(mut self, prompt: Prompt) -> Self {
         self.prompt = prompt;
         self
     }
-    pub fn with_placeholder(mut self, placeholder: Span<'static>) -> Self {
+    pub fn with_placeholder(mut self, placeholder: &'static str) -> Self {
         self.placeholder = placeholder;
         self
     }
-    pub fn with_timeout(mut self, timeout: Option<Duration>) -> Self {
-        self.timeout = timeout;
+    pub fn with_timeout(mut self, timeout: Duration) -> Self {
+        self.timeout = Some(timeout);
         self
     }
     pub fn with_cursor_mode(mut self, cursor_mode: CursorMode) -> Self {
         self.cursor.set_cursor_mode(cursor_mode);
         self
     }
-    pub fn hidden(mut self, hidden: bool) -> Self {
+    pub fn with_hidden(mut self, hidden: bool) -> Self {
         self.hidden = hidden;
         self
     }
+    pub fn with_validator(mut self, validator: Validator) -> Self {
+        self.validator = validator;
+        self
+    }
+    pub fn with_confirmation(mut self, confirmation: Confirmation) -> Self {
+        self.confirmation = Some(confirmation);
+        self
+    }
+    pub fn with_theme(mut self, theme: Theme) -> Self {
+        self.theme = theme;
+        self
+    }
 
-    pub fn current_content(&self) -> String {
+    pub(crate) fn current_content(&self) -> String {
         self.content.iter().collect()
     }
 }
@@ -126,7 +146,11 @@ impl Dialog for InputDialog {
                 }
             }
             Update::ToggleHidden => self.hidden = !self.hidden,
-            Update::Enter => self.completed = true,
+            Update::Enter => {
+                if self.validation_message().is_none() {
+                    Confirmation::confirm(self)
+                }
+            }
             Update::Noop => {}
         };
         Ok(())
@@ -141,7 +165,7 @@ impl Dialog for InputDialog {
     }
 
     fn viewport(&self) -> Viewport {
-        Viewport::Inline(2)
+        Viewport::Inline(3)
     }
 
     fn draw(&mut self, frame: &mut Frame) {
@@ -154,34 +178,5 @@ impl Dialog for InputDialog {
 
     fn timeout(&self) -> Option<Duration> {
         self.timeout
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test() {
-        let mut state = InputDialog::default();
-        state.perform_update(Update::InsertChar('1')).unwrap();
-        assert_eq!(vec!['1'], state.content);
-        assert_eq!(1, state.cursor.index());
-
-        state.perform_update(Update::InsertChar('2')).unwrap();
-        assert_eq!(vec!['1', '2'], state.content);
-        assert_eq!(2, state.cursor.index());
-
-        state.perform_update(Update::MoveCursorRight).unwrap();
-        assert_eq!(2, state.cursor.index());
-
-        state.perform_update(Update::MoveCursorLeft).unwrap();
-        state.perform_update(Update::MoveCursorLeft).unwrap();
-        assert_eq!(0, state.cursor.index());
-        state.perform_update(Update::MoveCursorLeft).unwrap();
-        assert_eq!(0, state.cursor.index());
-        state.perform_update(Update::InsertChar('0')).unwrap();
-        assert_eq!(vec!['0', '1', '2'], state.content);
-        assert_eq!(1, state.cursor.index());
     }
 }

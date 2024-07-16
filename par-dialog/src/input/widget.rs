@@ -1,7 +1,8 @@
 use crate::input::InputDialog;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Layout, Rect};
-use ratatui::prelude::{Line, Span, Text, Widget};
+use ratatui::prelude::{Line, Span, Widget};
+use ratatui::style::{Color, Style};
 use ratatui::widgets::Paragraph;
 
 impl Widget for &mut InputDialog {
@@ -9,39 +10,63 @@ impl Widget for &mut InputDialog {
     where
         Self: Sized,
     {
-        let (header_area, input_area) = {
-            if self.header.iter().as_slice().is_empty() {
-                (None, area)
-            } else {
-                let rects = Layout::vertical(vec![Constraint::Min(1), Constraint::Percentage(100)])
-                    .split(area);
-                (Some(rects[0]), rects[1])
-            }
+        let validation_message = self.validation_message();
+        let (header_area, input_area, validation_area) = {
+            let header_height = if self.prompt.header.is_empty() { 0 } else { 1 };
+            let validation_height = validation_message.map(|m| m.lines().count()).unwrap_or(0);
+            let rects = Layout::vertical(vec![
+                Constraint::Length(header_height),
+                Constraint::Length(1),
+                Constraint::Length(validation_height as u16),
+            ])
+            .split(area);
+            (rects[0], rects[1], rects[2])
         };
 
+        // region render header
+        let header = if self
+            .confirmation
+            .as_ref()
+            .is_some_and(|c| c.first_input.is_some())
+        {
+            self.confirmation.as_ref().unwrap().message()
+        } else {
+            self.prompt.header
+        };
+        Paragraph::new(Line::styled(header, self.theme.header_style)).render(header_area, buf);
+        // endregion
+
+        // region render line
+        let styled_prompt = Span::styled(self.prompt.inline, self.theme.prompt_style);
         let line = if self.hidden {
             Line::from(vec![
-                self.prompt.clone(),
+                styled_prompt,
                 String::from_iter(vec!['•'; self.content.len()]).into(),
             ])
         } else if self.content.is_empty() {
-            Line::from(vec![self.prompt.clone(), self.placeholder.clone()])
+            Line::from(vec![
+                styled_prompt,
+                Span::styled(self.placeholder, self.theme.placeholder_style),
+            ])
         } else {
             let (before_cursor, from_cursor) = self.content.split_at(self.cursor.index());
             let at_cursor = from_cursor.iter().next().unwrap_or(&' ');
             let after_cursor: String = from_cursor.iter().skip(1).collect();
             Line::from(vec![
-                self.prompt.clone(),
+                styled_prompt,
                 before_cursor.iter().collect::<String>().into(),
-                Span::styled(at_cursor.to_string(), self.cursor.style_display),
+                Span::styled(at_cursor.to_string(), self.cursor.current_style()),
                 after_cursor.into(),
             ])
         };
-
-        if let Some(header_area) = header_area {
-            Paragraph::new(Text::from(self.header.clone())).render(header_area, buf);
-        }
-
         Paragraph::new(line).render(input_area, buf);
+        // endregion
+
+        // region validation
+        if let Some(message) = validation_message {
+            Paragraph::new(Line::styled(message, Style::from(Color::LightRed)))
+                .render(validation_area, buf);
+        }
+        // endregion
     }
 }

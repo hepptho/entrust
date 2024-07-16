@@ -72,6 +72,8 @@ pub struct Theme {
     pub cursor_style: Style,
     pub header_style: Style,
     pub input_prefix: String,
+    pub placeholder_style: Style,
+    pub prompt_style: Style,
     pub selected_style: Style,
     pub match_style: Style,
 }
@@ -82,6 +84,8 @@ impl Default for Theme {
             cursor_style: Style::new().black().on_light_blue(),
             header_style: Style::new().light_blue().bold(),
             input_prefix: "❯ ".to_string(),
+            placeholder_style: Style::new().dim(),
+            prompt_style: Style::new().light_yellow().bold(),
             selected_style: Style::new().bold(),
             match_style: Style::new().light_yellow().underlined(),
         }

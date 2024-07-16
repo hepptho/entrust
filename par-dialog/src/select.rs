@@ -1,11 +1,10 @@
 use crate::dialog::{Dialog, Theme};
-use crate::input::cursor::CursorMode;
+use crate::input::prompt::Prompt;
 use crate::input::InputDialog;
 use crate::select::filter::apply_filter;
 use crate::{input, key_event_pattern as kep};
 use ratatui::crossterm::event::Event::Key;
 use ratatui::crossterm::event::{Event, KeyCode};
-use ratatui::prelude::*;
 use ratatui::widgets::ListState;
 use ratatui::{Frame, Viewport};
 use std::mem;
@@ -43,10 +42,8 @@ impl<'a> SelectDialog<'a> {
             .collect();
         let theme = Theme::default();
         let filter = InputDialog::default()
-            .with_prompt("  ".into())
-            .with_placeholder("type to filter...".dim())
-            .with_cursor_mode(CursorMode::Blink)
-            .with_cursor_style(theme.cursor_style);
+            .with_prompt(Prompt::inline("  "))
+            .with_placeholder("type to filter...");
         SelectDialog {
             items,
             list_state,
