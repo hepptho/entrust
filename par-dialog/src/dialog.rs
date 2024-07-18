@@ -1,9 +1,11 @@
+use once_cell::sync::Lazy;
 use ratatui::backend::CrosstermBackend;
 use ratatui::crossterm::event;
 use ratatui::crossterm::event::Event;
 use ratatui::prelude::{Style, Stylize};
 use ratatui::{Frame, Terminal, TerminalOptions, Viewport};
 use std::io;
+use std::ops::Deref;
 use std::time::{Duration, Instant};
 
 pub trait Dialog: Sized {
@@ -89,5 +91,18 @@ impl Default for Theme {
             selected_style: Style::new().bold(),
             match_style: Style::new().light_yellow().underlined(),
         }
+    }
+}
+
+impl Default for &'static Theme {
+    fn default() -> Self {
+        Theme::default_ref()
+    }
+}
+
+impl Theme {
+    pub fn default_ref() -> &'static Theme {
+        static THEME: Lazy<Theme> = Lazy::new(Theme::default);
+        THEME.deref()
     }
 }

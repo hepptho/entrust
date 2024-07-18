@@ -30,7 +30,7 @@ pub struct InputDialog {
     validator: Validator,
     confirmation: Option<Confirmation>,
     completed: bool,
-    theme: Theme,
+    theme: &'static Theme,
 }
 
 impl InputDialog {
@@ -77,7 +77,7 @@ impl InputDialog {
         self.confirmation = Some(confirmation);
         self
     }
-    pub fn with_theme(mut self, theme: Theme) -> Self {
+    pub fn with_theme(mut self, theme: &'static Theme) -> Self {
         self.theme = theme;
         self
     }
