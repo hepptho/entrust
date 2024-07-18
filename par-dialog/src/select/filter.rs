@@ -21,7 +21,7 @@ pub(super) fn apply_filter<'a>(
         .map(|i| FilteredItem {
             item: i,
             matching_chars: MATCHER
-                .fuzzy_indices(i.content, filter)
+                .fuzzy_indices(i.content.as_ref(), filter)
                 .map(|(_, i)| i)
                 .unwrap_or_default(),
         })

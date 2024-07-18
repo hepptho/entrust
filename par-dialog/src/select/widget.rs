@@ -41,7 +41,10 @@ impl<'a> Widget for &mut SelectDialog<'a> {
                 .map(|s| render_filtered_item(s, self.theme))
                 .collect()
         } else {
-            self.items.iter().map(|i| i.content.into()).collect()
+            self.items
+                .iter()
+                .map(|i| i.content.as_ref().into())
+                .collect()
         };
         let len = lines.len();
 

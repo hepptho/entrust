@@ -7,6 +7,7 @@ use ratatui::crossterm::event::Event::Key;
 use ratatui::crossterm::event::{Event, KeyCode};
 use ratatui::widgets::ListState;
 use ratatui::{Frame, Viewport};
+use std::borrow::Cow;
 use std::mem;
 
 mod filter;
@@ -24,21 +25,21 @@ pub struct SelectDialog<'a> {
 
 #[derive(Clone, Debug, Default)]
 struct Item<'a> {
-    content: &'a str,
+    content: Cow<'a, str>,
     index: usize,
 }
 
 impl<'a> SelectDialog<'a> {
-    pub fn new(options: Vec<&'a str>) -> Self {
+    pub fn new(options: Vec<Cow<'a, str>>) -> Self {
         let list_state = if options.is_empty() {
             ListState::default()
         } else {
             ListState::default().with_selected(Some(0))
         };
         let items = options
-            .iter()
+            .into_iter()
             .enumerate()
-            .map(|(index, &content)| Item { index, content })
+            .map(|(index, content)| Item { index, content })
             .collect();
         let theme = Theme::default_ref();
         let filter = InputDialog::default()
@@ -78,7 +79,7 @@ pub enum Update {
 
 impl<'a> Dialog for SelectDialog<'a> {
     type Update = Update;
-    type Output = Option<&'a str>;
+    type Output = Option<Cow<'a, str>>;
 
     fn update_for_event(event: Event) -> Self::Update {
         match event {
@@ -116,19 +117,19 @@ impl<'a> Dialog for SelectDialog<'a> {
 
     fn output(mut self) -> Self::Output {
         let mut state = mem::take(&mut self.list_state);
-        let options = mem::take(&mut self.items);
+        let mut items = mem::take(&mut self.items);
         if let Some(ref mut filter_dialog) = self.filter_dialog {
             let filtered = apply_filter(
-                options.as_slice(),
+                items.as_slice(),
                 &mut state,
                 filter_dialog.current_content().as_str(),
             );
             state
                 .selected()
                 .map(|s| filtered[s].item.index)
-                .map(|i| options[i].content)
+                .map(|i| items.swap_remove(i).content)
         } else {
-            state.selected().map(|s| options[s].content)
+            state.selected().map(|s| items.swap_remove(s).content)
         }
     }
 
@@ -155,10 +156,12 @@ mod tests {
 
     #[test]
     fn test_with_filter() {
-        let mut dialog = SelectDialog::new(vec![
-            "I", "heard", "the", "trailing", "garments", "of", "the", "night", "sweep", "through",
-            "her", "marble", "halls",
-        ]);
+        let mut dialog = SelectDialog::new(
+            "I heard the trailing garments of the Night sweep through her marble halls"
+                .split(' ')
+                .map(Cow::Borrowed)
+                .collect(),
+        );
 
         dialog.perform_update(Update::Next).unwrap();
         let filtered = apply_filter(
@@ -172,7 +175,7 @@ mod tests {
                 .as_str(),
         );
         assert_eq!(13, filtered.len());
-        assert_eq!(Some("heard"), dialog.clone().output());
+        assert_eq!(Some("heard".into()), dialog.clone().output());
 
         dialog
             .perform_update(Update::FilterInput(input::Update::InsertChar('t')))
@@ -188,7 +191,7 @@ mod tests {
                 .as_str(),
         );
         assert_eq!(6, filtered.len());
-        assert_eq!(Some("trailing"), dialog.clone().output());
+        assert_eq!(Some("trailing".into()), dialog.clone().output());
 
         dialog
             .perform_update(Update::FilterInput(input::Update::InsertChar('x')))
@@ -220,45 +223,36 @@ mod tests {
                 .as_str(),
         );
         assert_eq!(6, filtered.len());
-        assert_eq!(Some("the"), dialog.clone().output());
+        assert_eq!(Some("the".into()), dialog.clone().output());
     }
 
     #[test]
     fn test_without_filter() {
-        let mut dialog = SelectDialog::new(vec![
-            "I",
-            "saw",
-            "her",
-            "sable",
-            "skirts",
-            "all",
-            "fringed",
-            "with",
-            "light",
-            "from",
-            "the",
-            "celestial",
-            "walls",
-        ])
+        let mut dialog = SelectDialog::new(
+            "I saw her sable skirts all fringed with light from the celestial walls"
+                .split(' ')
+                .map(Cow::Borrowed)
+                .collect(),
+        )
         .without_filter_dialog();
 
         dialog.perform_update(Update::Next).unwrap();
-        assert_eq!(Some("saw"), dialog.clone().output());
+        assert_eq!(Some("saw".into()), dialog.clone().output());
 
         dialog
             .perform_update(Update::FilterInput(input::Update::InsertChar('a')))
             .unwrap();
-        assert_eq!(Some("saw"), dialog.clone().output());
+        assert_eq!(Some("saw".into()), dialog.clone().output());
 
         dialog.perform_update(Update::Previous).unwrap();
-        assert_eq!(Some("I"), dialog.clone().output());
+        assert_eq!(Some("I".into()), dialog.clone().output());
 
         for _ in 0..11 {
             dialog.perform_update(Update::Next).unwrap();
         }
-        assert_eq!(Some("celestial"), dialog.clone().output());
+        assert_eq!(Some("celestial".into()), dialog.clone().output());
 
         dialog.perform_update(Update::Next).unwrap();
-        assert_eq!(Some("walls"), dialog.clone().output());
+        assert_eq!(Some("walls".into()), dialog.clone().output());
     }
 }
