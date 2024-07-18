@@ -13,8 +13,12 @@ impl<'a> Widget for &mut SelectDialog<'a> {
     {
         let (header_area, list_area, scrollbar_area) = {
             let (header_area, list_scroll_area) = {
-                let rects = Layout::vertical(vec![Constraint::Min(1), Constraint::Percentage(100)])
-                    .split(area);
+                let filter_height = if self.filter_dialog.is_some() { 1 } else { 0 };
+                let rects = Layout::vertical(vec![
+                    Constraint::Length(filter_height),
+                    Constraint::Percentage(100),
+                ])
+                .split(area);
                 (rects[0], rects[1])
             };
             let rects = Layout::horizontal(vec![Constraint::Percentage(100), Constraint::Min(1)])
@@ -22,31 +26,42 @@ impl<'a> Widget for &mut SelectDialog<'a> {
             (header_area, rects[0], rects[1])
         };
 
-        self.filter.render(header_area, buf);
+        if let Some(ref mut filter_dialog) = self.filter_dialog {
+            filter_dialog.render(header_area, buf);
+        }
 
-        let filtered = apply_filter(
-            self.items.as_slice(),
-            &mut self.list_state,
-            self.filter.current_content().as_str(),
-        );
+        let lines: Vec<Line> = if let Some(ref mut filter_dialog) = self.filter_dialog {
+            let filtered = apply_filter(
+                self.items.as_slice(),
+                &mut self.list_state,
+                filter_dialog.current_content().as_str(),
+            );
+            filtered
+                .iter()
+                .map(|s| render_filtered_item(s, &self.theme))
+                .collect()
+        } else {
+            self.items.iter().map(|i| i.content.into()).collect()
+        };
+        let len = lines.len();
 
-        let list = List::new(filtered.iter().map(|s| render_item(s, &self.theme)))
+        let list = List::new(lines)
             .highlight_symbol(self.theme.input_prefix.as_str())
             .highlight_style(self.theme.selected_style)
             .highlight_spacing(HighlightSpacing::Always);
         StatefulWidget::render(list, list_area, buf, &mut self.list_state);
 
-        if filtered.len() > list_area.height as usize {
+        if len > list_area.height as usize {
             let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight);
             let mut scrollbar_state = ScrollbarState::default()
-                .content_length(filtered.len())
+                .content_length(len)
                 .position(self.list_state.selected().unwrap_or(0));
             StatefulWidget::render(scrollbar, scrollbar_area, buf, &mut scrollbar_state);
         }
     }
 }
 
-fn render_item(item: &FilteredItem, theme: &Theme) -> Line<'static> {
+fn render_filtered_item(item: &FilteredItem, theme: &Theme) -> Line<'static> {
     let char_spans: Vec<Span> = item
         .item
         .content

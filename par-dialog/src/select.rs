@@ -12,14 +12,14 @@ use std::mem;
 mod filter;
 mod widget;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct SelectDialog<'a> {
     items: Vec<Item<'a>>,
     list_state: ListState,
     height: u16,
     theme: Theme,
+    filter_dialog: Option<InputDialog>,
     completed: bool,
-    filter: InputDialog,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -43,15 +43,28 @@ impl<'a> SelectDialog<'a> {
         let theme = Theme::default();
         let filter = InputDialog::default()
             .with_prompt(Prompt::inline("  "))
-            .with_placeholder("type to filter...");
+            .with_placeholder("type to filter...")
+            .into();
         SelectDialog {
             items,
             list_state,
             height: 10,
-            filter,
             theme,
-            ..Self::default()
+            filter_dialog: filter,
+            completed: false,
         }
+    }
+    pub fn with_theme(mut self, theme: Theme) -> Self {
+        self.theme = theme;
+        self
+    }
+    pub fn with_height(mut self, height: u16) -> Self {
+        self.height = height;
+        self
+    }
+    pub fn without_filter_dialog(mut self) -> Self {
+        self.filter_dialog = None;
+        self
     }
 }
 
@@ -73,11 +86,10 @@ impl<'a> Dialog for SelectDialog<'a> {
                 kep!(KeyCode::Up) => Update::Previous,
                 kep!(KeyCode::Down) => Update::Next,
                 kep!(KeyCode::Enter) => Update::Confirm,
-                kep!(KeyCode::Char(char)) => Update::FilterInput(input::Update::InsertChar(char)),
                 kep!(KeyCode::Backspace) => Update::FilterInput(input::Update::DeleteBeforeCursor),
                 kep!(KeyCode::Left) => Update::FilterInput(input::Update::MoveCursorLeft),
                 kep!(KeyCode::Right) => Update::FilterInput(input::Update::MoveCursorRight),
-                _ => Update::Noop,
+                _ => Update::FilterInput(InputDialog::update_for_event(event)),
             },
             _ => Update::Noop,
         }
@@ -89,7 +101,9 @@ impl<'a> Dialog for SelectDialog<'a> {
             Update::Next => self.list_state.select_next(),
             Update::Confirm => self.completed = true,
             Update::FilterInput(input) => {
-                self.filter.perform_update(input)?;
+                if let Some(ref mut filter_dialog) = self.filter_dialog {
+                    filter_dialog.perform_update(input)?;
+                }
             }
             Update::Noop => {}
         };
@@ -103,15 +117,19 @@ impl<'a> Dialog for SelectDialog<'a> {
     fn output(mut self) -> Self::Output {
         let mut state = mem::take(&mut self.list_state);
         let options = mem::take(&mut self.items);
-        let filtered = apply_filter(
-            options.as_slice(),
-            &mut state,
-            self.filter.current_content().as_str(),
-        );
-        state
-            .selected()
-            .map(|s| filtered[s].item.index)
-            .map(|i| options[i].content)
+        if let Some(ref mut filter_dialog) = self.filter_dialog {
+            let filtered = apply_filter(
+                options.as_slice(),
+                &mut state,
+                filter_dialog.current_content().as_str(),
+            );
+            state
+                .selected()
+                .map(|s| filtered[s].item.index)
+                .map(|i| options[i].content)
+        } else {
+            state.selected().map(|s| options[s].content)
+        }
     }
 
     fn viewport(&self) -> Viewport {
@@ -123,7 +141,11 @@ impl<'a> Dialog for SelectDialog<'a> {
     }
 
     fn tick(&mut self) -> bool {
-        self.filter.tick()
+        if let Some(ref mut filter_dialog) = self.filter_dialog {
+            filter_dialog.tick()
+        } else {
+            false
+        }
     }
 }
 
@@ -132,28 +154,41 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test() {
-        let mut dialog = SelectDialog::new(vec!["abc", "def", "ghi"]);
+    fn test_with_filter() {
+        let mut dialog = SelectDialog::new(vec![
+            "I", "heard", "the", "trailing", "garments", "of", "the", "night", "sweep", "through",
+            "her", "marble", "halls",
+        ]);
 
         dialog.perform_update(Update::Next).unwrap();
         let filtered = apply_filter(
             dialog.items.as_slice(),
             &mut dialog.list_state,
-            dialog.filter.current_content().as_str(),
+            dialog
+                .filter_dialog
+                .as_ref()
+                .unwrap()
+                .current_content()
+                .as_str(),
         );
-        assert_eq!(3, filtered.len());
-        assert_eq!(Some("def"), dialog.clone().output());
+        assert_eq!(13, filtered.len());
+        assert_eq!(Some("heard"), dialog.clone().output());
 
         dialog
-            .perform_update(Update::FilterInput(input::Update::InsertChar('g')))
+            .perform_update(Update::FilterInput(input::Update::InsertChar('t')))
             .unwrap();
         let filtered = apply_filter(
             dialog.items.as_slice(),
             &mut dialog.list_state,
-            dialog.filter.current_content().as_str(),
+            dialog
+                .filter_dialog
+                .as_ref()
+                .unwrap()
+                .current_content()
+                .as_str(),
         );
-        assert_eq!(1, filtered.len());
-        assert_eq!(Some("ghi"), dialog.clone().output());
+        assert_eq!(6, filtered.len());
+        assert_eq!(Some("trailing"), dialog.clone().output());
 
         dialog
             .perform_update(Update::FilterInput(input::Update::InsertChar('x')))
@@ -161,7 +196,12 @@ mod tests {
         let filtered = apply_filter(
             dialog.items.as_slice(),
             &mut dialog.list_state,
-            dialog.filter.current_content().as_str(),
+            dialog
+                .filter_dialog
+                .as_ref()
+                .unwrap()
+                .current_content()
+                .as_str(),
         );
         assert_eq!(0, filtered.len());
         assert_eq!(None, dialog.clone().output());
@@ -172,9 +212,53 @@ mod tests {
         let filtered = apply_filter(
             dialog.items.as_slice(),
             &mut dialog.list_state,
-            dialog.filter.current_content().as_str(),
+            dialog
+                .filter_dialog
+                .as_ref()
+                .unwrap()
+                .current_content()
+                .as_str(),
         );
-        assert_eq!(1, filtered.len());
-        assert_eq!(Some("ghi"), dialog.clone().output());
+        assert_eq!(6, filtered.len());
+        assert_eq!(Some("the"), dialog.clone().output());
+    }
+
+    #[test]
+    fn test_without_filter() {
+        let mut dialog = SelectDialog::new(vec![
+            "I",
+            "saw",
+            "her",
+            "sable",
+            "skirts",
+            "all",
+            "fringed",
+            "with",
+            "light",
+            "from",
+            "the",
+            "celestial",
+            "walls",
+        ])
+        .without_filter_dialog();
+
+        dialog.perform_update(Update::Next).unwrap();
+        assert_eq!(Some("saw"), dialog.clone().output());
+
+        dialog
+            .perform_update(Update::FilterInput(input::Update::InsertChar('a')))
+            .unwrap();
+        assert_eq!(Some("saw"), dialog.clone().output());
+
+        dialog.perform_update(Update::Previous).unwrap();
+        assert_eq!(Some("I"), dialog.clone().output());
+
+        for _ in 0..11 {
+            dialog.perform_update(Update::Next).unwrap();
+        }
+        assert_eq!(Some("celestial"), dialog.clone().output());
+
+        dialog.perform_update(Update::Next).unwrap();
+        assert_eq!(Some("walls"), dialog.clone().output());
     }
 }
