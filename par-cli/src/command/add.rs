@@ -1,18 +1,20 @@
+use clap::Args;
+use color_print::cstr;
+use log::{debug, info};
 use std::io::{IsTerminal, Read};
+use std::ops::Deref;
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
-use clap::Args;
-use color_print::cstr;
-use inquire::validator::Validation;
-use inquire::PasswordDisplayMode;
-use log::{debug, info};
-
+use crate::command::BackendValueEnum;
+use crate::theme::DIALOG_THEME;
 use par_core;
 use par_core::{git, Backend};
-
-use crate::command::BackendValueEnum;
-use crate::theme::INQUIRE_RENDER_CONFIG;
+use par_dialog::dialog::Dialog;
+use par_dialog::input::confirmation::{Confirmation, ConfirmationMessageType};
+use par_dialog::input::prompt::Prompt;
+use par_dialog::input::validator::Validator;
+use par_dialog::input::InputDialog;
 
 pub(super) const ABOUT: &str = "Add a new password";
 
@@ -64,21 +66,16 @@ fn encrypt(store: &Path, args: &AddArgs) -> anyhow::Result<()> {
 }
 
 pub(crate) fn read_password_interactive() -> anyhow::Result<String> {
-    let pass = inquire::Password::new("Enter new Password ❯")
-        .with_render_config(*INQUIRE_RENDER_CONFIG)
-        .with_custom_confirmation_message("Confirm password ❯")
-        .with_custom_confirmation_error_message("The entered passwords do not match.")
-        .with_display_toggle_enabled()
-        .with_display_mode(PasswordDisplayMode::Masked)
-        .with_validator(|input: &str| {
-            if input.is_empty() {
-                Ok(Validation::Invalid(
-                    "The password must not be empty.".into(),
-                ))
-            } else {
-                Ok(Validation::Valid)
-            }
-        })
-        .prompt()?;
+    let pass = InputDialog::default()
+        .with_prompt(Prompt::inline("Enter new password ❯ "))
+        .with_confirmation(Confirmation::new(
+            "Confirm password   ❯ ",
+            "The entered passwords do not match ❯ ",
+            ConfirmationMessageType::Inline,
+        ))
+        .with_validator(Validator::not_empty("The password must not be empty."))
+        .with_hidden(true)
+        .with_theme(DIALOG_THEME.deref())
+        .run()?;
     Ok(pass)
 }

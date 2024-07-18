@@ -1,11 +1,12 @@
 use crate::command::clear_clipboard;
-use crate::theme::INQUIRE_RENDER_CONFIG;
 use anyhow::anyhow;
 use clap::Args;
 use color_print::cstr;
 use copypasta::{ClipboardContext, ClipboardProvider};
-use inquire::Select;
 use par_core::{get_existing_locations, resolve_existing_location, Backend};
+use par_dialog::dialog::Dialog;
+use par_dialog::select::SelectDialog;
+use std::borrow::Cow;
 use std::io;
 use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
@@ -62,10 +63,13 @@ fn get_location(store: &Path, key: &Option<String>) -> anyhow::Result<PathBuf> {
 }
 
 fn select_key(store: &Path) -> anyhow::Result<String> {
-    let vec = get_existing_locations(store)?;
-    let selected = Select::new("Select key", vec)
-        .with_render_config(*INQUIRE_RENDER_CONFIG)
-        .with_page_size(15)
-        .prompt()?;
-    Ok(selected)
+    let vec = get_existing_locations(store)?
+        .into_iter()
+        .map(Cow::Owned)
+        .collect();
+    let selected = SelectDialog::new(vec).run()?;
+    match selected {
+        None => select_key(store),
+        Some(sel) => Ok(sel.to_string()),
+    }
 }

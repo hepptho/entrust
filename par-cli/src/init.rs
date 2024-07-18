@@ -1,8 +1,11 @@
 use crate::command::ParSubcommand;
-use crate::theme::INQUIRE_RENDER_CONFIG;
-use inquire::Text;
+use crate::theme::DIALOG_THEME;
 use par_core::Backend;
+use par_dialog::dialog::Dialog;
+use par_dialog::input::prompt::Prompt;
+use par_dialog::input::InputDialog;
 use std::fs;
+use std::ops::Deref;
 use std::path::Path;
 
 pub fn init(subcommand: Option<&ParSubcommand>, store: &Path) -> anyhow::Result<()> {
@@ -27,15 +30,15 @@ fn create_recipient_file_if_not_present(backend: Backend, store: &Path) -> anyho
     if file.exists() {
         return Ok(());
     }
-    let recipient: String = Text::new(
-        format!(
-            "{} recipient for which the file should be created ❯",
-            backend.display_name()
-        )
-        .as_str(),
-    )
-    .with_render_config(*INQUIRE_RENDER_CONFIG)
-    .prompt()?;
+    let prompt = format!(
+        "{} recipient for which the file should be created ❯",
+        backend.display_name()
+    );
+    // TODO leaking is fine here but maybe we can do better
+    let recipient = InputDialog::default()
+        .with_prompt(Prompt::inline(prompt.leak()))
+        .with_theme(DIALOG_THEME.deref())
+        .run()?;
     fs::write(file, recipient.as_bytes())?;
     Ok(())
 }
