@@ -5,15 +5,21 @@ use std::mem;
 pub struct Confirmation {
     initial_message: &'static str,
     incorrect_message: &'static str,
+    pub(super) message_type: ConfirmationMessageType,
     pub(super) answered_incorrectly: bool,
     pub(super) first_input: Option<Vec<char>>,
 }
 
 impl Confirmation {
-    pub fn new(initial_message: &'static str, incorrect_message: &'static str) -> Self {
+    pub fn new(
+        initial_message: &'static str,
+        incorrect_message: &'static str,
+        message_type: ConfirmationMessageType,
+    ) -> Self {
         Confirmation {
             initial_message,
             incorrect_message,
+            message_type,
             answered_incorrectly: false,
             first_input: None,
         }
@@ -46,6 +52,12 @@ impl Confirmation {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ConfirmationMessageType {
+    Header,
+    Inline,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -54,8 +66,11 @@ mod tests {
 
     #[test]
     fn test() {
-        let mut state =
-            InputDialog::default().with_confirmation(Confirmation::new("repeat", "no match"));
+        let mut state = InputDialog::default().with_confirmation(Confirmation::new(
+            "repeat",
+            "no match",
+            ConfirmationMessageType::Header,
+        ));
 
         state.perform_update(Update::InsertChar('a')).unwrap();
         assert_eq!(None, state.confirmation.as_ref().unwrap().first_input);

@@ -1,3 +1,4 @@
+use crate::input::confirmation::ConfirmationMessageType;
 use crate::input::InputDialog;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Layout, Rect};
@@ -10,9 +11,26 @@ impl Widget for &mut InputDialog {
     where
         Self: Sized,
     {
+        let (header_prompt, inline_prompt) = self
+            .confirmation
+            .as_ref()
+            .and_then(|c| {
+                if c.first_input.is_some() {
+                    Some(c)
+                } else {
+                    None
+                }
+            })
+            .map(|c| match c.message_type {
+                ConfirmationMessageType::Header => (c.message(), self.prompt.inline),
+                ConfirmationMessageType::Inline => (self.prompt.header, c.message()),
+            })
+            .unwrap_or((self.prompt.header, self.prompt.inline));
+
         let validation_message = self.validation_message();
+
         let (header_area, input_area, validation_area) = {
-            let header_height = if self.prompt.header.is_empty() { 0 } else { 1 };
+            let header_height = if header_prompt.is_empty() { 0 } else { 1 };
             let validation_height = validation_message.map(|m| m.lines().count()).unwrap_or(0);
             let rects = Layout::vertical(vec![
                 Constraint::Length(header_height),
@@ -24,20 +42,12 @@ impl Widget for &mut InputDialog {
         };
 
         // region render header
-        let header = if self
-            .confirmation
-            .as_ref()
-            .is_some_and(|c| c.first_input.is_some())
-        {
-            self.confirmation.as_ref().unwrap().message()
-        } else {
-            self.prompt.header
-        };
-        Paragraph::new(Line::styled(header, self.theme.header_style)).render(header_area, buf);
+        Paragraph::new(Line::styled(header_prompt, self.theme.header_style))
+            .render(header_area, buf);
         // endregion
 
         // region render line
-        let styled_prompt = Span::styled(self.prompt.inline, self.theme.prompt_style);
+        let styled_prompt = Span::styled(inline_prompt, self.theme.prompt_style);
         let line = if self.hidden {
             Line::from(vec![
                 styled_prompt,
