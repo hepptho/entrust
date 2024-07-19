@@ -44,16 +44,20 @@ pub fn run(store: PathBuf, args: EditArgs) -> anyhow::Result<()> {
     fs::rename(&location, &bak)?;
 
     let edited = if stdin().is_terminal() {
-        edit_interactive(&args, &bak)?
+        edit_interactive(&args, &bak)
     } else {
-        edit_non_interactive()?
+        edit_non_interactive()
     };
 
-    Backend::from(args.backend).encrypt(edited.as_bytes(), &store, &location)?;
-
-    git::edit(&store, &args.key)?;
-    fs::remove_file(bak)?;
-    Ok(())
+    let encryption_result =
+        edited.and_then(|e| Backend::from(args.backend).encrypt(e.as_bytes(), &store, &location));
+    if encryption_result.is_ok() {
+        git::edit(&store, &args.key)?;
+        fs::remove_file(bak)?;
+    } else {
+        fs::rename(&bak, &location)?;
+    }
+    encryption_result
 }
 
 fn edit_interactive(args: &EditArgs, bak: &Path) -> anyhow::Result<String> {
