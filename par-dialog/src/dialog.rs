@@ -71,7 +71,8 @@ pub trait Dialog: Sized {
 
 #[derive(Clone, Debug)]
 pub struct Theme {
-    pub cursor_style: Style,
+    pub cursor_on_style: Style,
+    pub cursor_off_style: Style,
     pub header_style: Style,
     pub input_prefix: String,
     pub placeholder_style: Style,
@@ -83,7 +84,8 @@ pub struct Theme {
 impl Default for Theme {
     fn default() -> Self {
         Theme {
-            cursor_style: Style::new().black().on_light_blue(),
+            cursor_on_style: Style::new().black().on_light_blue(),
+            cursor_off_style: Style::new(),
             header_style: Style::new().light_blue().bold(),
             input_prefix: "❯ ".to_string(),
             placeholder_style: Style::new().dim(),

@@ -65,7 +65,7 @@ impl Widget for &mut InputDialog {
             Line::from(vec![
                 styled_prompt,
                 before_cursor.iter().collect::<String>().into(),
-                Span::styled(at_cursor.to_string(), self.cursor.current_style()),
+                Span::styled(at_cursor.to_string(), self.cursor.current_style(self.theme)),
                 after_cursor.into(),
             ])
         };

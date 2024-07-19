@@ -4,19 +4,19 @@ use ratatui::prelude::Style;
 #[derive(Debug, Default, Clone)]
 pub(super) struct Cursor {
     index: usize,
-    pub(super) style: CursorStyle,
+    pub(super) state: CursorState,
     pub(super) mode: CursorMode,
 }
 
 impl Cursor {
-    pub(super) fn on(&mut self) {
-        self.style.on = true;
+    pub(super) fn set_state(&mut self, state: CursorState) {
+        self.state = state;
     }
-    pub(super) fn off(&mut self) {
-        self.style.on = false;
-    }
-    fn toggle(&mut self) {
-        self.style.on = !self.style.on
+    fn toggle_state(&mut self) {
+        match self.state {
+            CursorState::On => self.state = CursorState::Off,
+            CursorState::Off => self.state = CursorState::On,
+        }
     }
 
     pub(super) fn index(&self) -> usize {
@@ -39,70 +39,41 @@ impl Cursor {
 
     fn on_move(&mut self) {
         if self.mode != CursorMode::Hide {
-            self.on();
+            self.set_state(CursorState::On);
         }
-    }
-
-    pub(super) fn set_cursor_on_style(&mut self, on_style: Style) {
-        self.style.on_style = on_style
-    }
-
-    pub(super) fn set_cursor_off_style(&mut self, off_style: Style) {
-        self.style.off_style = off_style
     }
 
     pub(super) fn set_cursor_mode(&mut self, cursor_mode: CursorMode) {
         self.mode = cursor_mode;
         if cursor_mode == CursorMode::Hide {
-            self.off();
+            self.set_state(CursorState::Off);
         }
     }
     pub(super) fn tick(&mut self) -> bool {
         if self.mode == CursorMode::Blink {
-            self.toggle();
+            self.toggle_state();
             true
         } else {
             false
         }
     }
-    pub(super) fn current_style(&self) -> Style {
+    pub(super) fn current_style(&self, theme: &Theme) -> Style {
         if self.mode == CursorMode::Hide {
             Style::default()
         } else {
-            self.style.current_style()
+            match self.state {
+                CursorState::On => theme.cursor_on_style,
+                CursorState::Off => theme.cursor_off_style,
+            }
         }
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub(super) struct CursorStyle {
-    on_style: Style,
-    off_style: Style,
-    on: bool,
-}
-
-impl CursorStyle {
-    fn current_style(&self) -> Style {
-        if self.on {
-            self.on_style
-        } else {
-            self.off_style
-        }
-    }
-}
-
-impl Default for CursorStyle {
-    fn default() -> Self {
-        let theme = Theme::default();
-        let on_style = theme.cursor_style;
-        let off_style = Style::default();
-        let on = true;
-        CursorStyle {
-            on_style,
-            off_style,
-            on,
-        }
-    }
+#[derive(Debug, Default, Clone, Copy)]
+pub(super) enum CursorState {
+    #[default]
+    On,
+    Off,
 }
 
 #[derive(PartialEq, Debug, Default, Clone, Copy)]

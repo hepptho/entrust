@@ -41,14 +41,6 @@ impl InputDialog {
         self.cursor.set_index(cursor_index);
         self
     }
-    pub fn with_cursor_on_style(mut self, cursor_on_style: Style) -> Self {
-        self.cursor.set_cursor_on_style(cursor_on_style);
-        self
-    }
-    pub fn with_cursor_off_style(mut self, cursor_off_style: Style) -> Self {
-        self.cursor.set_cursor_off_style(cursor_off_style);
-        self
-    }
     pub fn with_prompt(mut self, prompt: Prompt) -> Self {
         self.prompt = prompt;
         self
