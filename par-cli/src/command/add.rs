@@ -55,7 +55,7 @@ fn encrypt(store: &Path, args: &AddArgs) -> anyhow::Result<()> {
         fs::create_dir_all(parent)?;
     }
     let input = if io::stdin().is_terminal() {
-        read_password_interactive()?
+        read_password_interactive("")?
     } else {
         let mut input = String::new();
         io::stdin().read_to_string(&mut input)?;
@@ -65,8 +65,9 @@ fn encrypt(store: &Path, args: &AddArgs) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub(crate) fn read_password_interactive() -> anyhow::Result<String> {
+pub(crate) fn read_password_interactive(initial: &str) -> anyhow::Result<String> {
     let pass = InputDialog::default()
+        .with_content(initial)
         .with_prompt(Prompt::inline("Enter new password ❯ "))
         .with_confirmation(Confirmation::new(
             "Confirm password   ❯ ",
@@ -74,7 +75,7 @@ pub(crate) fn read_password_interactive() -> anyhow::Result<String> {
             ConfirmationMessageType::Inline,
         ))
         .with_validator(Validator::not_empty("The password must not be empty."))
-        .with_hidden(true)
+        .with_hidden(initial.is_empty())
         .with_theme(DIALOG_THEME.deref())
         .run()?;
     Ok(pass)

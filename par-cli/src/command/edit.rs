@@ -1,9 +1,11 @@
+use std::borrow::Cow;
 use std::fs;
-use std::path::PathBuf;
+use std::io::{stdin, IsTerminal};
+use std::ops::Deref;
+use std::path::{Path, PathBuf};
 
 use clap::Args;
 use color_print::cstr;
-use crossterm::style::Stylize;
 
 use crate::command::add::read_password_interactive;
 use crate::command::BackendValueEnum;
@@ -16,14 +18,19 @@ pub(super) const LONG_ABOUT: &str = cstr!(
 
   Change an existing password
 
-  Displays the old password and offers an interactive prompt.
-  To overwrite the password without interaction, <bold,#ffb86c>remove</> and <bold,#ffb86c>add</>."
+  Displays the old password and offers an interactive prompt if <bold,#ffb86c>stdin</> is empty, \
+  otherwise reads a line from stdin."
 );
 
 #[derive(Args, Debug)]
 pub struct EditArgs {
     /// The key of the password to edit
     key: String,
+    /// Edit the password in cleartext
+    ///
+    /// Only effective when stdin is empty
+    #[arg(short, long)]
+    cleartext: bool,
     /// Choose gpg or age for re-encryption
     #[arg(short, long, value_enum, default_value_t = BackendValueEnum::Age)]
     pub backend: BackendValueEnum,
@@ -36,12 +43,30 @@ pub fn run(store: PathBuf, args: EditArgs) -> anyhow::Result<()> {
     bak.as_mut_os_string().push(".bak");
     fs::rename(&location, &bak)?;
 
-    let old = Backend::decrypt(&bak)?;
-    eprintln!("{} {}", "Old password:".blue(), old.bold());
-    let new = read_password_interactive()?;
-    Backend::from(args.backend).encrypt(new.as_bytes(), &store, &location)?;
+    let edited = if stdin().is_terminal() {
+        edit_interactive(&args, &bak)?
+    } else {
+        edit_non_interactive()?
+    };
+
+    Backend::from(args.backend).encrypt(edited.as_bytes(), &store, &location)?;
 
     git::edit(&store, &args.key)?;
     fs::remove_file(bak)?;
     Ok(())
+}
+
+fn edit_interactive(args: &EditArgs, bak: &Path) -> anyhow::Result<String> {
+    let initial = if args.cleartext {
+        Cow::Owned(Backend::decrypt(bak)?)
+    } else {
+        Cow::Borrowed("")
+    };
+    read_password_interactive(initial.deref())
+}
+
+fn edit_non_interactive() -> anyhow::Result<String> {
+    let mut buf = String::with_capacity(16);
+    stdin().read_line(&mut buf)?;
+    Ok(buf)
 }
