@@ -5,6 +5,23 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::prelude::{Line, Span, StatefulWidget, Widget};
 use ratatui::widgets::{HighlightSpacing, List, Scrollbar, ScrollbarOrientation, ScrollbarState};
+use std::cmp::max;
+use std::sync::OnceLock;
+
+fn width(select_dialog: &SelectDialog) -> u16 {
+    static CELL: OnceLock<u16> = OnceLock::new();
+    *CELL.get_or_init(|| {
+        let max_item_width = select_dialog
+            .items
+            .iter()
+            .map(|i| i.content.len())
+            .max()
+            .unwrap_or(0);
+        let prefix_length = select_dialog.theme.input_prefix.len();
+        let width = max(25, prefix_length + max_item_width + 3);
+        u16::try_from(width).unwrap_or(u16::MAX)
+    })
+}
 
 impl<'a> Widget for &mut SelectDialog<'a> {
     fn render(self, area: Rect, buf: &mut Buffer)
@@ -21,8 +38,9 @@ impl<'a> Widget for &mut SelectDialog<'a> {
                 .split(area);
                 (rects[0], rects[1])
             };
-            let rects = Layout::horizontal(vec![Constraint::Percentage(100), Constraint::Min(1)])
-                .split(list_scroll_area);
+            let rects =
+                Layout::horizontal(vec![Constraint::Length(width(self)), Constraint::Length(1)])
+                    .split(list_scroll_area);
             (header_area, rects[0], rects[1])
         };
 
