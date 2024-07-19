@@ -6,6 +6,7 @@ use std::{fs, io};
 use copypasta::{ClipboardContext, ClipboardProvider};
 use par_core::{generate_passphrase, generate_password, Backend};
 
+use crate::command::clear_clipboard;
 use crate::command::generate::animation::animate;
 use crate::command::generate::parse::{GenerateArgs, Output, Type};
 use par_core::git;
@@ -36,9 +37,7 @@ fn output(store: &Path, args: GenerateArgs, pass: String) -> anyhow::Result<()> 
             }
         }
         Output::Clipboard => {
-            ClipboardContext::new()
-                .and_then(|mut ctx| ctx.set_contents(pass))
-                .map_err(|_| anyhow!("Could not access clipboard"))?;
+            copy_to_clipboard(pass)?;
         }
         Output::Store(key) => {
             let location = par_core::resolve_new_location(store, key)?;
@@ -49,7 +48,16 @@ fn output(store: &Path, args: GenerateArgs, pass: String) -> anyhow::Result<()> 
             if !args.no_git {
                 git::add(store, key)?;
             }
+            copy_to_clipboard(pass)?;
+            clear_clipboard::clear_in_new_process(10)?;
         }
     }
+    Ok(())
+}
+
+fn copy_to_clipboard(pass: String) -> anyhow::Result<()> {
+    ClipboardContext::new()
+        .and_then(|mut ctx| ctx.set_contents(pass))
+        .map_err(|_| anyhow!("Could not access clipboard"))?;
     Ok(())
 }

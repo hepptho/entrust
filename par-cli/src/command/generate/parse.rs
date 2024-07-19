@@ -57,7 +57,8 @@ pub(crate) struct OutputArgs {
     /// Copy the generated password to the clipboard
     #[arg(short, long, help_heading = "Output")]
     clipboard: bool,
-    /// Encrypt and store the generated password under the given key
+    /// Encrypt and store the generated password under the given key;
+    /// also copy it to the clipboard
     #[arg(short, long, help_heading = "Output", value_name = "KEY")]
     store: Option<String>,
 }
