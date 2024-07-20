@@ -8,6 +8,9 @@ edition = "2021"
 [[bin]]
 name = "par"
 
+[features]
+tracing = ["dep:tracing", "dep:tracing-subscriber"]
+
 [dependencies]
 par-core = { path = "../par-core" }
 par-dialog = { path = "../par-dialog" }
@@ -22,3 +25,5 @@ itertools = { workspace = true }
 once_cell = { workspace = true }
 rand = { workspace = true }
 termtree = "0.5.0"
+tracing = { workspace = true, optional = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"], optional = true }
