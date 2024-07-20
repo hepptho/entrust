@@ -1,5 +1,4 @@
 use anyhow::anyhow;
-use log::debug;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
@@ -19,7 +18,6 @@ pub fn init(store: &Path) -> anyhow::Result<()> {
 }
 
 pub fn add(store: &Path, key: &str) -> anyhow::Result<()> {
-    debug!("git add(store: {store:?}, key: {key})");
     if has_repository(store) {
         run_command(
             git().arg("add").arg(store.join(key).as_os_str()),

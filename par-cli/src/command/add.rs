@@ -1,6 +1,5 @@
 use clap::Args;
 use color_print::cstr;
-use log::{debug, info};
 use std::io::{IsTerminal, Read};
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
@@ -39,18 +38,15 @@ pub struct AddArgs {
 }
 
 pub fn run(store: PathBuf, args: AddArgs) -> anyhow::Result<()> {
-    debug!("add run");
     encrypt(&store, &args)?;
     if !args.no_git {
         git::add(&store, &args.key)?
     }
-    info!("Added {}", args.key);
     Ok(())
 }
 
 fn encrypt(store: &Path, args: &AddArgs) -> anyhow::Result<()> {
     let location = par_core::resolve_new_location(store, &args.key)?;
-    debug!("Location: {:?}", location);
     if let Some(parent) = location.parent() {
         fs::create_dir_all(parent)?;
     }

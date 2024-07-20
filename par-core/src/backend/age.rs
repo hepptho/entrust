@@ -8,7 +8,6 @@ use std::process::{Command, Stdio};
 use crate::age::identity::{identity_file, read_identity_or_get_cached};
 use crate::backend::{exit_status_to_result, output_to_result};
 use anyhow::anyhow;
-use log::debug;
 
 pub const RECIPIENT_FILE_NAME: &str = ".age-id";
 
@@ -37,7 +36,6 @@ pub fn decrypt(path: &Path) -> anyhow::Result<String> {
     } else {
         identity_file().ok_or(anyhow!("No age identity provided"))?
     };
-    debug!("cmd_identity: {cmd_identity}");
     let mut child = Command::new("age")
         .arg("--decrypt")
         .arg("--identity")

@@ -19,7 +19,6 @@ use crate::tree::print_tree;
 use crate::{init, theme};
 use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
 use color_print::cstr;
-use log::debug;
 use par_core::Backend;
 use std::path::PathBuf;
 use std::{env, fs};
@@ -92,8 +91,6 @@ pub enum ParSubcommand {
 }
 
 pub fn run(par: ParArgs) -> anyhow::Result<()> {
-    debug!("{par:#?}");
-
     init::init(par.command.as_ref(), &par.store)?;
 
     match par.command {
