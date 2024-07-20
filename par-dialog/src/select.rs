@@ -8,7 +8,7 @@ use ratatui::crossterm::event::{Event, KeyCode};
 use ratatui::widgets::ListState;
 use ratatui::{Frame, Viewport};
 use std::borrow::Cow;
-use std::mem;
+use std::{env, mem};
 use tracing::debug;
 
 mod filter;
@@ -18,7 +18,7 @@ mod widget;
 pub struct SelectDialog<'a> {
     items: Vec<Item<'a>>,
     list_state: ListState,
-    height: u16,
+    height: u8,
     theme: &'static Theme,
     filter_dialog: Option<InputDialog>,
     completed: bool,
@@ -37,6 +37,8 @@ impl<'a> SelectDialog<'a> {
         } else {
             ListState::default().with_selected(Some(0))
         };
+        let height =
+            env::var("PAR_SELECT_HEIGHT").map_or(10, |var| var.parse::<u8>().unwrap_or(10));
         let items = options
             .into_iter()
             .enumerate()
@@ -50,7 +52,7 @@ impl<'a> SelectDialog<'a> {
         SelectDialog {
             items,
             list_state,
-            height: 10,
+            height,
             theme,
             filter_dialog: filter,
             completed: false,
@@ -60,7 +62,7 @@ impl<'a> SelectDialog<'a> {
         self.theme = theme;
         self
     }
-    pub fn with_height(mut self, height: u16) -> Self {
+    pub fn with_height(mut self, height: u8) -> Self {
         self.height = height;
         self
     }
@@ -139,7 +141,7 @@ impl<'a> Dialog for SelectDialog<'a> {
     }
 
     fn viewport(&self) -> Viewport {
-        Viewport::Inline(self.height)
+        Viewport::Inline(self.height as u16)
     }
 
     fn draw(&mut self, frame: &mut Frame) {
