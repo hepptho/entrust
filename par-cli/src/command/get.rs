@@ -1,15 +1,13 @@
 use crate::command::clear_clipboard;
+use crate::key::Key;
 use anyhow::anyhow;
 use clap::Args;
 use color_print::cstr;
 use copypasta::{ClipboardContext, ClipboardProvider};
-use par_core::{get_existing_locations, resolve_existing_location, Backend};
-use par_dialog::dialog::Dialog;
-use par_dialog::select::SelectDialog;
-use std::borrow::Cow;
+use par_core::{resolve_existing_location, Backend};
 use std::io;
 use std::io::IsTerminal;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 pub(super) const ABOUT: &str = "Decrypt a password";
 
@@ -39,8 +37,11 @@ pub struct GetArgs {
 }
 
 pub fn run(store: PathBuf, args: GetArgs) -> anyhow::Result<()> {
-    let location = get_location(&store, &args.key)?;
-    let decrypted = Backend::decrypt(&location)?;
+    let location = &args
+        .key
+        .unwrap_or_select_existing(&store)
+        .and_then(|key| resolve_existing_location(&store, &key, false))?;
+    let decrypted = Backend::decrypt(location)?;
     if args.clipboard {
         ClipboardContext::new()
             .and_then(|mut ctx| ctx.set_contents(decrypted))
@@ -53,23 +54,4 @@ pub fn run(store: PathBuf, args: GetArgs) -> anyhow::Result<()> {
         }
     };
     Ok(())
-}
-
-fn get_location(store: &Path, key: &Option<String>) -> anyhow::Result<PathBuf> {
-    match key {
-        Some(k) => resolve_existing_location(store, k, false),
-        None => select_key(store).map(|k| store.join(k)),
-    }
-}
-
-fn select_key(store: &Path) -> anyhow::Result<String> {
-    let vec = get_existing_locations(store)?
-        .into_iter()
-        .map(Cow::Owned)
-        .collect();
-    let selected = SelectDialog::new(vec).run()?;
-    match selected {
-        None => select_key(store),
-        Some(sel) => Ok(sel.to_string()),
-    }
 }

@@ -7,8 +7,9 @@ use std::path::{Path, PathBuf};
 use clap::Args;
 use color_print::cstr;
 
-use crate::command::add::read_password_interactive;
 use crate::command::BackendValueEnum;
+use crate::dialog::read_password_interactive;
+use crate::key::Key;
 use par_core::{git, resolve_existing_location, Backend};
 
 pub(super) const ABOUT: &str = "Change an existing password";
@@ -25,7 +26,7 @@ pub(super) const LONG_ABOUT: &str = cstr!(
 #[derive(Args, Debug)]
 pub struct EditArgs {
     /// The key of the password to edit
-    key: String,
+    key: Option<String>,
     /// Edit the password in cleartext
     ///
     /// Only effective when stdin is empty
@@ -37,14 +38,15 @@ pub struct EditArgs {
 }
 
 pub fn run(store: PathBuf, args: EditArgs) -> anyhow::Result<()> {
-    let location = resolve_existing_location(&store, &args.key, false)?;
+    let key = &args.key.unwrap_or_select_existing(&store)?;
+    let location = resolve_existing_location(&store, key, false)?;
 
     let mut bak = location.clone();
     bak.as_mut_os_string().push(".bak");
     fs::rename(&location, &bak)?;
 
     let edited = if stdin().is_terminal() {
-        edit_interactive(&args, &bak)
+        edit_interactive(args.cleartext, &bak)
     } else {
         edit_non_interactive()
     };
@@ -52,7 +54,7 @@ pub fn run(store: PathBuf, args: EditArgs) -> anyhow::Result<()> {
     let encryption_result =
         edited.and_then(|e| Backend::from(args.backend).encrypt(e.as_bytes(), &store, &location));
     if encryption_result.is_ok() {
-        git::edit(&store, &args.key)?;
+        git::edit(&store, key)?;
         fs::remove_file(bak)?;
     } else {
         fs::rename(&bak, &location)?;
@@ -60,8 +62,8 @@ pub fn run(store: PathBuf, args: EditArgs) -> anyhow::Result<()> {
     encryption_result
 }
 
-fn edit_interactive(args: &EditArgs, bak: &Path) -> anyhow::Result<String> {
-    let initial = if args.cleartext {
+fn edit_interactive(cleartext: bool, bak: &Path) -> anyhow::Result<String> {
+    let initial = if cleartext {
         Cow::Owned(Backend::decrypt(bak)?)
     } else {
         Cow::Borrowed("")
