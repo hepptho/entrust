@@ -9,6 +9,7 @@ use ratatui::widgets::ListState;
 use ratatui::{Frame, Viewport};
 use std::borrow::Cow;
 use std::mem;
+use tracing::debug;
 
 mod filter;
 mod widget;
@@ -69,6 +70,7 @@ impl<'a> SelectDialog<'a> {
     }
 }
 
+#[derive(Debug)]
 pub enum Update {
     Previous,
     Next,
@@ -97,6 +99,7 @@ impl<'a> Dialog for SelectDialog<'a> {
     }
 
     fn perform_update(&mut self, update: Self::Update) -> std::io::Result<()> {
+        debug!(?update, ?self.items, ?self.list_state);
         match update {
             Update::Previous => self.list_state.select_previous(),
             Update::Next => self.list_state.select_next(),

@@ -636,6 +636,7 @@ dependencies = [
  "fuzzy-matcher",
  "once_cell",
  "ratatui",
+ "tracing",
 ]
 
 [[package]]

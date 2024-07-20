@@ -7,17 +7,17 @@ mod widget;
 use std::io;
 use std::time::Duration;
 
-use ratatui::crossterm::event::Event::Key;
-use ratatui::crossterm::event::{Event, KeyCode, KeyModifiers};
-use ratatui::prelude::*;
-use ratatui::Viewport;
-
 use crate::dialog::{Dialog, Theme};
 use crate::input::confirmation::Confirmation;
 use crate::input::cursor::{Cursor, CursorMode};
 use crate::input::prompt::Prompt;
 use crate::input::validator::Validator;
 use crate::key_event_pattern as kep;
+use ratatui::crossterm::event::Event::Key;
+use ratatui::crossterm::event::{Event, KeyCode, KeyModifiers};
+use ratatui::prelude::*;
+use ratatui::Viewport;
+use tracing::debug;
 
 #[derive(Debug, Default, Clone)]
 pub struct InputDialog {
@@ -79,6 +79,7 @@ impl InputDialog {
     }
 }
 
+#[derive(Debug)]
 pub enum Update {
     InsertChar(char),
     DeleteBeforeCursor,
@@ -110,8 +111,9 @@ impl Dialog for InputDialog {
         }
     }
 
-    fn perform_update(&mut self, change: Self::Update) -> io::Result<()> {
-        match change {
+    fn perform_update(&mut self, update: Self::Update) -> io::Result<()> {
+        debug!(?update, ?self.content, ?self.cursor);
+        match update {
             Update::InsertChar(char) => {
                 self.content.insert(self.cursor.index(), char);
                 self.cursor.move_by(1);
