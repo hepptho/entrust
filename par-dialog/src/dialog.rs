@@ -11,7 +11,7 @@ use std::time::{Duration, Instant};
 pub trait Dialog: Sized {
     type Update;
     type Output;
-    fn update_for_event(event: Event) -> Self::Update;
+    fn update_for_event(event: Event) -> Option<Self::Update>;
     fn perform_update(&mut self, update: Self::Update) -> io::Result<()>;
     fn completed(&self) -> bool;
     fn output(self) -> Self::Output;
@@ -47,9 +47,12 @@ pub trait Dialog: Sized {
             }
 
             let event = event::read()?;
-            let update = Self::update_for_event(event);
-            self.perform_update(update)?;
-            up_to_date = false;
+            if let Some(update) = Self::update_for_event(event) {
+                self.perform_update(update)?;
+                up_to_date = false;
+            } else {
+                up_to_date = true;
+            }
         }
         terminal.clear()?;
         if timed_out {

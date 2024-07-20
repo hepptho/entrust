@@ -83,18 +83,20 @@ impl<'a> Dialog for SelectDialog<'a> {
     type Update = Update;
     type Output = Option<Cow<'a, str>>;
 
-    fn update_for_event(event: Event) -> Self::Update {
+    fn update_for_event(event: Event) -> Option<Self::Update> {
         match event {
             Key(ke) => match ke {
-                kep!(KeyCode::Up) => Update::Previous,
-                kep!(KeyCode::Down) => Update::Next,
-                kep!(KeyCode::Enter) => Update::Confirm,
-                kep!(KeyCode::Backspace) => Update::FilterInput(input::Update::DeleteBeforeCursor),
-                kep!(KeyCode::Left) => Update::FilterInput(input::Update::MoveCursorLeft),
-                kep!(KeyCode::Right) => Update::FilterInput(input::Update::MoveCursorRight),
-                _ => Update::FilterInput(InputDialog::update_for_event(event)),
+                kep!(KeyCode::Up) => Update::Previous.into(),
+                kep!(KeyCode::Down) => Update::Next.into(),
+                kep!(KeyCode::Enter) => Update::Confirm.into(),
+                kep!(KeyCode::Backspace) => {
+                    Update::FilterInput(input::Update::DeleteBeforeCursor).into()
+                }
+                kep!(KeyCode::Left) => Update::FilterInput(input::Update::MoveCursorLeft).into(),
+                kep!(KeyCode::Right) => Update::FilterInput(input::Update::MoveCursorRight).into(),
+                _ => InputDialog::update_for_event(event).map(Update::FilterInput),
             },
-            _ => Update::Noop,
+            _ => None,
         }
     }
 

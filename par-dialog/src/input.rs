@@ -88,26 +88,25 @@ pub enum Update {
     MoveCursorRight,
     ToggleHidden,
     Enter,
-    Noop,
 }
 
 impl Dialog for InputDialog {
     type Update = Update;
     type Output = String;
 
-    fn update_for_event(event: Event) -> Self::Update {
+    fn update_for_event(event: Event) -> Option<Self::Update> {
         match event {
             Key(ke) => match ke {
-                kep!(KeyCode::Char('h'), KeyModifiers::ALT) => Update::ToggleHidden,
-                kep!(KeyCode::Char(char)) => Update::InsertChar(char),
-                kep!(KeyCode::Backspace) => Update::DeleteBeforeCursor,
-                kep!(KeyCode::Delete) => Update::DeleteAfterCursor,
-                kep!(KeyCode::Left) => Update::MoveCursorLeft,
-                kep!(KeyCode::Right) => Update::MoveCursorRight,
-                kep!(KeyCode::Enter) => Update::Enter,
-                _ => Update::Noop,
+                kep!(KeyCode::Char('h'), KeyModifiers::ALT) => Update::ToggleHidden.into(),
+                kep!(KeyCode::Char(char)) => Update::InsertChar(char).into(),
+                kep!(KeyCode::Backspace) => Update::DeleteBeforeCursor.into(),
+                kep!(KeyCode::Delete) => Update::DeleteAfterCursor.into(),
+                kep!(KeyCode::Left) => Update::MoveCursorLeft.into(),
+                kep!(KeyCode::Right) => Update::MoveCursorRight.into(),
+                kep!(KeyCode::Enter) => Update::Enter.into(),
+                _ => None,
             },
-            _ => Update::Noop,
+            _ => None,
         }
     }
 
@@ -145,7 +144,6 @@ impl Dialog for InputDialog {
                     Confirmation::confirm(self)
                 }
             }
-            Update::Noop => {}
         };
         Ok(())
     }
