@@ -16,17 +16,7 @@ pub(super) fn apply_filter<'a>(
     list_state: &mut ListState,
     filter: &str,
 ) -> Vec<FilteredItem<'a>> {
-    let filtered: Vec<_> = list
-        .iter()
-        .map(|i| FilteredItem {
-            item: i,
-            matching_chars: MATCHER
-                .fuzzy_indices(i.content.as_ref(), filter)
-                .map(|(_, i)| i)
-                .unwrap_or_default(),
-        })
-        .filter(|i| filter.is_empty() || !i.matching_chars.is_empty())
-        .collect();
+    let filtered = get_filtered(list, filter);
     if filtered.is_empty() {
         list_state.select(None)
     } else if let Some(selected) = list_state.selected() {
@@ -36,4 +26,17 @@ pub(super) fn apply_filter<'a>(
         list_state.select(Some(0))
     }
     filtered
+}
+
+pub(super) fn get_filtered<'a>(list: &'a [Item<'a>], filter: &str) -> Vec<FilteredItem<'a>> {
+    list.iter()
+        .map(|i| FilteredItem {
+            item: i,
+            matching_chars: MATCHER
+                .fuzzy_indices(i.content.as_ref(), filter)
+                .map(|(_, i)| i)
+                .unwrap_or_default(),
+        })
+        .filter(|i| filter.is_empty() || !i.matching_chars.is_empty())
+        .collect()
 }

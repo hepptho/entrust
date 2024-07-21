@@ -1,20 +1,20 @@
 use crate::dialog::{Dialog, Theme};
 use crate::input::prompt::Prompt;
 use crate::input::InputDialog;
-use crate::select::filter::apply_filter;
+use crate::select::filter::get_filtered;
 use crate::{input, key_event_pattern as kep};
 use ratatui::crossterm::event::Event::Key;
 use ratatui::crossterm::event::{Event, KeyCode};
 use ratatui::widgets::ListState;
 use ratatui::{Frame, Viewport};
 use std::borrow::Cow;
-use std::{env, mem};
+use std::env;
 use tracing::debug;
 
 mod filter;
 mod widget;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct SelectDialog<'a> {
     items: Vec<Item<'a>>,
     list_state: ListState,
@@ -70,6 +70,15 @@ impl<'a> SelectDialog<'a> {
         self.filter_dialog = None;
         self
     }
+
+    fn current_item_index(&self) -> Option<usize> {
+        if let Some(filter_dialog) = &self.filter_dialog {
+            let filtered = get_filtered(&self.items, &filter_dialog.current_content());
+            self.list_state.selected().map(|s| filtered[s].item.index)
+        } else {
+            self.list_state.selected()
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -123,21 +132,8 @@ impl<'a> Dialog for SelectDialog<'a> {
     }
 
     fn output(mut self) -> Self::Output {
-        let mut state = mem::take(&mut self.list_state);
-        let mut items = mem::take(&mut self.items);
-        if let Some(ref mut filter_dialog) = self.filter_dialog {
-            let filtered = apply_filter(
-                items.as_slice(),
-                &mut state,
-                filter_dialog.current_content().as_str(),
-            );
-            state
-                .selected()
-                .map(|s| filtered[s].item.index)
-                .map(|i| items.swap_remove(i).content)
-        } else {
-            state.selected().map(|s| items.swap_remove(s).content)
-        }
+        self.current_item_index()
+            .map(|i| self.items.swap_remove(i).content)
     }
 
     fn viewport(&self) -> Viewport {
@@ -160,6 +156,14 @@ impl<'a> Dialog for SelectDialog<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::select::filter::apply_filter;
+
+    fn current_selected<'a>(dialog: &'a SelectDialog) -> Option<&'a str> {
+        dialog
+            .current_item_index()
+            .map(|i| &dialog.items[i].content)
+            .map(|c| c.as_ref())
+    }
 
     #[test]
     fn test_with_filter() {
@@ -182,7 +186,7 @@ mod tests {
                 .as_str(),
         );
         assert_eq!(13, filtered.len());
-        assert_eq!(Some("heard".into()), dialog.clone().output());
+        assert_eq!(Some("heard"), current_selected(&dialog));
 
         dialog
             .perform_update(Update::FilterInput(input::Update::InsertChar('t')))
@@ -198,7 +202,7 @@ mod tests {
                 .as_str(),
         );
         assert_eq!(6, filtered.len());
-        assert_eq!(Some("trailing".into()), dialog.clone().output());
+        assert_eq!(Some("trailing"), current_selected(&dialog));
 
         dialog
             .perform_update(Update::FilterInput(input::Update::InsertChar('x')))
@@ -214,7 +218,7 @@ mod tests {
                 .as_str(),
         );
         assert_eq!(0, filtered.len());
-        assert_eq!(None, dialog.clone().output());
+        assert_eq!(None, current_selected(&dialog));
 
         dialog
             .perform_update(Update::FilterInput(input::Update::DeleteBeforeCursor))
@@ -230,7 +234,7 @@ mod tests {
                 .as_str(),
         );
         assert_eq!(6, filtered.len());
-        assert_eq!(Some("the".into()), dialog.clone().output());
+        assert_eq!(Some("the"), current_selected(&dialog));
     }
 
     #[test]
@@ -244,22 +248,22 @@ mod tests {
         .without_filter_dialog();
 
         dialog.perform_update(Update::Next).unwrap();
-        assert_eq!(Some("saw".into()), dialog.clone().output());
+        assert_eq!(Some("saw"), current_selected(&dialog));
 
         dialog
             .perform_update(Update::FilterInput(input::Update::InsertChar('a')))
             .unwrap();
-        assert_eq!(Some("saw".into()), dialog.clone().output());
+        assert_eq!(Some("saw"), current_selected(&dialog));
 
         dialog.perform_update(Update::Previous).unwrap();
-        assert_eq!(Some("I".into()), dialog.clone().output());
+        assert_eq!(Some("I"), current_selected(&dialog));
 
         for _ in 0..11 {
             dialog.perform_update(Update::Next).unwrap();
         }
-        assert_eq!(Some("celestial".into()), dialog.clone().output());
+        assert_eq!(Some("celestial"), current_selected(&dialog));
 
         dialog.perform_update(Update::Next).unwrap();
-        assert_eq!(Some("walls".into()), dialog.clone().output());
+        assert_eq!(Some("walls"), current_selected(&dialog));
     }
 }
