@@ -19,7 +19,7 @@ use ratatui::prelude::*;
 use ratatui::Viewport;
 use tracing::debug;
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct InputDialog {
     content: Vec<char>,
     cursor: Cursor,

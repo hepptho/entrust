@@ -1,13 +1,17 @@
 use crate::input::InputDialog;
+use std::fmt::{Debug, Formatter};
 
-#[derive(Debug, Clone)]
+pub trait Predicate: 'static + Fn(&Vec<char>) -> bool {}
+impl<P: 'static + Fn(&Vec<char>) -> bool> Predicate for P {}
+
 pub struct Validator {
     message: &'static str,
-    predicate: fn(&Vec<char>) -> bool,
+    predicate: Box<dyn Predicate>,
 }
 
 impl Validator {
-    pub fn new(message: &'static str, predicate: fn(&Vec<char>) -> bool) -> Self {
+    pub fn new(message: &'static str, predicate: impl Predicate) -> Self {
+        let predicate = Box::new(predicate);
         Validator { message, predicate }
     }
 }
@@ -16,7 +20,7 @@ impl Default for Validator {
     fn default() -> Self {
         Validator {
             message: "",
-            predicate: |_| true,
+            predicate: Box::new(|_| true),
         }
     }
 }
@@ -25,7 +29,7 @@ impl Validator {
     pub fn not_empty(message: &'static str) -> Self {
         Validator {
             message,
-            predicate: |vec| !vec.is_empty(),
+            predicate: Box::new(|vec| !vec.is_empty()),
         }
     }
 }
@@ -37,6 +41,12 @@ impl InputDialog {
         } else {
             Some(self.validator.message)
         }
+    }
+}
+
+impl Debug for Validator {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Validator {{ message: {} }}", self.message)
     }
 }
 
