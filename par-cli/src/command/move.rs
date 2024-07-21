@@ -17,7 +17,7 @@ pub struct MoveArgs {
 
 pub fn run(store: PathBuf, args: MoveArgs) -> anyhow::Result<()> {
     let from = &args.from.unwrap_or_select_existing(&store)?;
-    let to = &args.to.unwrap_or_read("New key ❯ ")?;
+    let to = &args.to.unwrap_or_read_new("New key ❯ ", &store)?;
     let from_location = resolve_existing_location(&store, from, true)?;
     let to_location = resolve_new_location(&store, to)?;
     if let Some(dir) = to_location.parent() {

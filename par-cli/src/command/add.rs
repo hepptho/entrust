@@ -33,7 +33,7 @@ pub struct AddArgs {
 }
 
 pub fn run(store: PathBuf, args: AddArgs) -> anyhow::Result<()> {
-    let key = &args.key.unwrap_or_read("Key ❯ ")?;
+    let key = &args.key.unwrap_or_read_new("Key ❯ ", &store)?;
     encrypt(&store, key, args.backend.into())?;
     if !args.no_git {
         git::add(&store, key)?
