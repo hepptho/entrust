@@ -54,10 +54,17 @@ impl Widget for &mut InputDialog {
                 String::from_iter(vec!['•'; self.content.len()]).into(),
             ])
         } else if self.content.is_empty() {
-            Line::from(vec![
-                styled_prompt,
-                Span::styled(self.placeholder, self.theme.placeholder_style),
-            ])
+            if self.placeholder.is_empty() {
+                Line::from(vec![
+                    styled_prompt,
+                    Span::styled(" ", self.cursor.current_style(self.theme)),
+                ])
+            } else {
+                Line::from(vec![
+                    styled_prompt,
+                    Span::styled(self.placeholder, self.theme.placeholder_style),
+                ])
+            }
         } else {
             let (before_cursor, from_cursor) = self.content.split_at(self.cursor.index());
             let at_cursor = from_cursor.iter().next().unwrap_or(&' ');
