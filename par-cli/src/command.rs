@@ -6,6 +6,7 @@ pub mod generate;
 pub mod get;
 pub mod r#move;
 pub mod remove;
+mod shell;
 
 use crate::command::add::AddArgs;
 use crate::command::clear_clipboard::ClearClipboardArgs;
@@ -86,6 +87,8 @@ pub enum ParSubcommand {
     Generate(GenerateArgs),
     #[command(hide = true)]
     ClearClipboard(ClearClipboardArgs),
+    #[command(hide = true)]
+    Shell,
     #[command(about = completions::ABOUT)]
     Completions(CompletionsArgs),
 }
@@ -101,6 +104,7 @@ pub fn run(par: ParArgs) -> anyhow::Result<()> {
         Some(ParSubcommand::Get(args)) => get::run(par.store, args),
         Some(ParSubcommand::Move(args)) => r#move::run(par.store, args),
         Some(ParSubcommand::Remove(args)) => remove::run(par.store, args),
+        Some(ParSubcommand::Shell) => shell::run(),
         Some(ParSubcommand::Completions(args)) => {
             completions::run(args);
             Ok(())
