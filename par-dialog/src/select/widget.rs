@@ -17,7 +17,7 @@ fn width(select_dialog: &SelectDialog) -> u16 {
             .map(|i| i.content.len())
             .max()
             .unwrap_or(0);
-        let prefix_length = select_dialog.theme.input_prefix.len();
+        let prefix_length = select_dialog.theme.select_indicator.len();
         let width = max(25, prefix_length + max_item_width + 3);
         u16::try_from(width).unwrap_or(u16::MAX)
     })
@@ -67,7 +67,7 @@ impl<'a> Widget for &mut SelectDialog<'a> {
         let len = lines.len();
 
         let list = List::new(lines)
-            .highlight_symbol(self.theme.input_prefix.as_str())
+            .highlight_symbol(self.theme.select_indicator.as_str())
             .highlight_style(self.theme.selected_style)
             .highlight_spacing(HighlightSpacing::Always);
         StatefulWidget::render(list, list_area, buf, &mut self.list_state);
