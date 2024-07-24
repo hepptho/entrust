@@ -91,6 +91,8 @@ pub enum ParSubcommand {
     Shell,
     #[command(about = completions::ABOUT)]
     Completions(CompletionsArgs),
+    #[command(about = "Print a tree of the password store")]
+    Tree,
 }
 
 pub fn run(par: ParArgs) -> anyhow::Result<()> {
@@ -109,6 +111,7 @@ pub fn run(par: ParArgs) -> anyhow::Result<()> {
             completions::run(args);
             Ok(())
         }
+        Some(ParSubcommand::Tree) => print_tree(&par.store),
         None => {
             ParArgs::command().print_help()?;
             print_tree(&par.store)?;
