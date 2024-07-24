@@ -31,10 +31,11 @@ const ABOUT: &str = cstr!(
 "
 );
 
-const LONG_ABOUT: &str = cstr!("
+const LONG_ABOUT: &str = cstr!(
+    "
 
   Manage passwords using <bold,#ffb86c>age</> or <bold,#ffb86c>gpg</>
-  Locations of files to en/decrypt can be given relative to the root of the password store in <bold,#ffb86c>PAR_HOME</>
+  Locations of files to en/decrypt can be given relative to the root of the password store
 "
 );
 
