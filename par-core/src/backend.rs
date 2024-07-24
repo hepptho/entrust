@@ -98,8 +98,11 @@ fn exit_status_to_result(exit_status: ExitStatus, bin_name: &str) -> anyhow::Res
     }
 }
 
-fn output_to_result(output: Output) -> anyhow::Result<String> {
+fn output_to_result(mut output: Output) -> anyhow::Result<String> {
     if output.status.success() {
+        while let Some(b'\n') = output.stdout.last() {
+            output.stdout.pop();
+        }
         Ok(String::from_utf8(output.stdout)?)
     } else {
         Err(anyhow!(String::from_utf8(output.stderr)?))
