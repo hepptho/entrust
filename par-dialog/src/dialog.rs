@@ -13,7 +13,7 @@ pub trait Dialog: Sized {
     type Output;
     fn update_for_event(event: Event) -> Option<Self::Update>;
     fn perform_update(&mut self, update: Self::Update) -> io::Result<()>;
-    fn completed(&self) -> bool;
+    fn state(&self) -> DialogState;
     fn output(self) -> Self::Output;
     fn viewport(&self) -> Viewport;
     fn draw(&mut self, frame: &mut Frame);
@@ -28,7 +28,7 @@ pub trait Dialog: Sized {
         let start = Instant::now();
         let mut up_to_date = false;
         let mut timed_out = false;
-        while !self.completed() {
+        while self.state() == DialogState::Pending {
             if !up_to_date {
                 terminal.draw(|frame| self.draw(frame))?;
             }
@@ -57,6 +57,8 @@ pub trait Dialog: Sized {
         terminal.clear()?;
         if timed_out {
             Err(io::Error::other("timed out"))
+        } else if self.state() == DialogState::Cancelled {
+            Err(io::Error::other("cancelled"))
         } else {
             Ok(self.output())
         }
@@ -70,6 +72,14 @@ pub trait Dialog: Sized {
     fn timeout(&self) -> Option<Duration> {
         None
     }
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub enum DialogState {
+    #[default]
+    Pending,
+    Completed,
+    Cancelled,
 }
 
 #[derive(Clone, Debug)]

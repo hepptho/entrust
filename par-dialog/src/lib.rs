@@ -40,3 +40,11 @@ macro_rules! key_event_pattern {
     };
 }
 pub(crate) use key_event_pattern;
+
+macro_rules! cancel_key_event {
+    () => {
+        crate::key_event_pattern!(KeyCode::Esc)
+            | crate::key_event_pattern!(KeyCode::Char('c'), KeyModifiers::CONTROL)
+    };
+}
+pub(crate) use cancel_key_event;

@@ -7,12 +7,12 @@ mod widget;
 use std::io;
 use std::time::Duration;
 
-use crate::dialog::{Dialog, Theme};
+use crate::dialog::{Dialog, DialogState, Theme};
 use crate::input::confirmation::Confirmation;
 use crate::input::cursor::{Cursor, CursorMode};
 use crate::input::prompt::Prompt;
 use crate::input::validator::Validator;
-use crate::key_event_pattern as kep;
+use crate::{cancel_key_event, key_event_pattern as kep};
 use ratatui::crossterm::event::Event::Key;
 use ratatui::crossterm::event::{Event, KeyCode, KeyModifiers};
 use ratatui::prelude::*;
@@ -29,7 +29,7 @@ pub struct InputDialog {
     timeout: Option<Duration>,
     validator: Validator,
     confirmation: Option<Confirmation>,
-    completed: bool,
+    state: DialogState,
     theme: &'static Theme,
 }
 
@@ -87,7 +87,8 @@ pub enum Update {
     MoveCursorLeft,
     MoveCursorRight,
     ToggleHidden,
-    Enter,
+    Confirm,
+    Cancel,
 }
 
 impl Dialog for InputDialog {
@@ -97,13 +98,14 @@ impl Dialog for InputDialog {
     fn update_for_event(event: Event) -> Option<Self::Update> {
         match event {
             Key(ke) => match ke {
+                cancel_key_event!() => Update::Cancel.into(),
                 kep!(KeyCode::Char('h'), KeyModifiers::ALT) => Update::ToggleHidden.into(),
                 kep!(KeyCode::Char(char)) => Update::InsertChar(char).into(),
                 kep!(KeyCode::Backspace) => Update::DeleteBeforeCursor.into(),
                 kep!(KeyCode::Delete) => Update::DeleteAfterCursor.into(),
                 kep!(KeyCode::Left) => Update::MoveCursorLeft.into(),
                 kep!(KeyCode::Right) => Update::MoveCursorRight.into(),
-                kep!(KeyCode::Enter) => Update::Enter.into(),
+                kep!(KeyCode::Enter) => Update::Confirm.into(),
                 _ => None,
             },
             _ => None,
@@ -139,17 +141,18 @@ impl Dialog for InputDialog {
                 }
             }
             Update::ToggleHidden => self.hidden = !self.hidden,
-            Update::Enter => {
+            Update::Confirm => {
                 if self.validation_message().is_none() {
                     Confirmation::confirm(self)
                 }
             }
+            Update::Cancel => self.state = DialogState::Cancelled,
         };
         Ok(())
     }
 
-    fn completed(&self) -> bool {
-        self.completed
+    fn state(&self) -> DialogState {
+        self.state
     }
 
     fn output(self) -> Self::Output {

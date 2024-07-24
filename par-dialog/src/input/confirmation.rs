@@ -1,3 +1,4 @@
+use crate::dialog::DialogState;
 use crate::input::InputDialog;
 use std::mem;
 
@@ -37,7 +38,7 @@ impl Confirmation {
         if let Some(confirmation) = &dialog.confirmation {
             if let Some(first_input) = &confirmation.first_input {
                 if first_input == &dialog.content {
-                    dialog.completed = true
+                    dialog.state = DialogState::Completed
                 } else {
                     dialog.confirmation.as_mut().unwrap().answered_incorrectly = true
                 }
@@ -47,7 +48,7 @@ impl Confirmation {
                 dialog.cursor.set_index(0)
             }
         } else {
-            dialog.completed = true
+            dialog.state = DialogState::Completed
         }
     }
 }
@@ -66,31 +67,31 @@ mod tests {
 
     #[test]
     fn test() {
-        let mut state = InputDialog::default().with_confirmation(Confirmation::new(
+        let mut dialog = InputDialog::default().with_confirmation(Confirmation::new(
             "repeat",
             "no match",
             ConfirmationMessageType::Header,
         ));
 
-        state.perform_update(Update::InsertChar('a')).unwrap();
-        assert_eq!(None, state.confirmation.as_ref().unwrap().first_input);
+        dialog.perform_update(Update::InsertChar('a')).unwrap();
+        assert_eq!(None, dialog.confirmation.as_ref().unwrap().first_input);
 
-        state.perform_update(Update::Enter).unwrap();
+        dialog.perform_update(Update::Confirm).unwrap();
         assert_eq!(
             Some(vec!['a']),
-            state.confirmation.as_ref().unwrap().first_input
+            dialog.confirmation.as_ref().unwrap().first_input
         );
-        assert!(state.content.is_empty());
-        assert!(!state.confirmation.as_ref().unwrap().answered_incorrectly);
+        assert!(dialog.content.is_empty());
+        assert!(!dialog.confirmation.as_ref().unwrap().answered_incorrectly);
 
-        state.perform_update(Update::InsertChar('b')).unwrap();
-        state.perform_update(Update::Enter).unwrap();
-        assert!(state.confirmation.as_ref().unwrap().answered_incorrectly);
-        assert!(!state.completed);
+        dialog.perform_update(Update::InsertChar('b')).unwrap();
+        dialog.perform_update(Update::Confirm).unwrap();
+        assert!(dialog.confirmation.as_ref().unwrap().answered_incorrectly);
+        assert_eq!(DialogState::Pending, dialog.state);
 
-        state.perform_update(Update::DeleteBeforeCursor).unwrap();
-        state.perform_update(Update::InsertChar('a')).unwrap();
-        state.perform_update(Update::Enter).unwrap();
-        assert!(state.completed);
+        dialog.perform_update(Update::DeleteBeforeCursor).unwrap();
+        dialog.perform_update(Update::InsertChar('a')).unwrap();
+        dialog.perform_update(Update::Confirm).unwrap();
+        assert_eq!(DialogState::Completed, dialog.state);
     }
 }

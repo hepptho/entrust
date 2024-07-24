@@ -53,7 +53,7 @@ impl Debug for Validator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dialog::Dialog;
+    use crate::dialog::{Dialog, DialogState};
     use crate::input::Update;
     use crate::input::Update::InsertChar;
 
@@ -64,13 +64,13 @@ mod tests {
 
         assert_eq!(Some("must not be empty"), state.validation_message());
 
-        state.perform_update(Update::Enter).unwrap();
-        assert!(!state.completed);
+        state.perform_update(Update::Confirm).unwrap();
+        assert_eq!(DialogState::Pending, state.state);
 
         state.perform_update(InsertChar('a')).unwrap();
         assert_eq!(None, state.validation_message());
 
-        state.perform_update(Update::Enter).unwrap();
-        assert!(state.completed);
+        state.perform_update(Update::Confirm).unwrap();
+        assert_eq!(DialogState::Completed, state.state);
     }
 }

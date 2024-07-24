@@ -1,10 +1,10 @@
-use crate::dialog::{Dialog, Theme};
+use crate::dialog::{Dialog, DialogState, Theme};
 use crate::input::prompt::Prompt;
 use crate::input::InputDialog;
 use crate::select::filter::get_filtered;
-use crate::{input, key_event_pattern as kep};
+use crate::{cancel_key_event, input, key_event_pattern as kep};
 use ratatui::crossterm::event::Event::Key;
-use ratatui::crossterm::event::{Event, KeyCode};
+use ratatui::crossterm::event::{Event, KeyCode, KeyModifiers};
 use ratatui::widgets::ListState;
 use ratatui::{Frame, Viewport};
 use std::borrow::Cow;
@@ -21,7 +21,7 @@ pub struct SelectDialog<'a> {
     height: u8,
     theme: &'static Theme,
     filter_dialog: Option<InputDialog>,
-    completed: bool,
+    state: DialogState,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -55,7 +55,7 @@ impl<'a> SelectDialog<'a> {
             height,
             theme,
             filter_dialog: filter,
-            completed: false,
+            state: DialogState::Pending,
         }
     }
     pub fn with_theme(mut self, theme: &'static Theme) -> Self {
@@ -85,9 +85,9 @@ impl<'a> SelectDialog<'a> {
 pub enum Update {
     Previous,
     Next,
-    Confirm,
     FilterInput(input::Update),
-    Noop,
+    Confirm,
+    Cancel,
 }
 
 impl<'a> Dialog for SelectDialog<'a> {
@@ -97,14 +97,15 @@ impl<'a> Dialog for SelectDialog<'a> {
     fn update_for_event(event: Event) -> Option<Self::Update> {
         match event {
             Key(ke) => match ke {
+                cancel_key_event!() => Update::Cancel.into(),
                 kep!(KeyCode::Up) => Update::Previous.into(),
                 kep!(KeyCode::Down) => Update::Next.into(),
-                kep!(KeyCode::Enter) => Update::Confirm.into(),
                 kep!(KeyCode::Backspace) => {
                     Update::FilterInput(input::Update::DeleteBeforeCursor).into()
                 }
                 kep!(KeyCode::Left) => Update::FilterInput(input::Update::MoveCursorLeft).into(),
                 kep!(KeyCode::Right) => Update::FilterInput(input::Update::MoveCursorRight).into(),
+                kep!(KeyCode::Enter) => Update::Confirm.into(),
                 _ => InputDialog::update_for_event(event).map(Update::FilterInput),
             },
             _ => None,
@@ -116,19 +117,19 @@ impl<'a> Dialog for SelectDialog<'a> {
         match update {
             Update::Previous => self.list_state.select_previous(),
             Update::Next => self.list_state.select_next(),
-            Update::Confirm => self.completed = true,
             Update::FilterInput(input) => {
                 if let Some(ref mut filter_dialog) = self.filter_dialog {
                     filter_dialog.perform_update(input)?;
                 }
             }
-            Update::Noop => {}
+            Update::Confirm => self.state = DialogState::Completed,
+            Update::Cancel => self.state = DialogState::Cancelled,
         };
         Ok(())
     }
 
-    fn completed(&self) -> bool {
-        self.completed
+    fn state(&self) -> DialogState {
+        self.state
     }
 
     fn output(mut self) -> Self::Output {
