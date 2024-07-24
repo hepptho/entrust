@@ -1,3 +1,4 @@
+pub mod alias;
 pub mod command;
 mod dialog;
 mod init;

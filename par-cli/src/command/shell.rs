@@ -1,3 +1,4 @@
+use crate::alias::apply_aliases;
 use crate::command;
 use crate::command::{bin_name, ParArgs};
 use anyhow::anyhow;
@@ -9,7 +10,6 @@ use par_dialog::input::InputDialog;
 
 pub fn run() -> anyhow::Result<()> {
     age::initialize_identity()?;
-    let bin_name = bin_name();
     loop {
         let input = InputDialog::default()
             .with_prompt(Prompt::inline("par ❯ "))
@@ -20,20 +20,17 @@ pub fn run() -> anyhow::Result<()> {
         if input == "q" || input == "quit" {
             break;
         }
-        if input == "c" || input == "copy" {
-            command::run(ParArgs::parse_from([bin_name.as_str(), "get", "-c"]))?
-        } else {
-            parse_and_run(input, bin_name.as_str());
-        }
+        parse_and_run(input);
     }
     Ok(())
 }
 
-fn parse_and_run(input: String, bin_name: &str) {
+fn parse_and_run(input: String) {
     shlex::split(input.as_str())
         .ok_or(anyhow!("Invalid input"))
         .and_then(|mut args| {
-            args.insert(0, bin_name.to_string());
+            args.insert(0, bin_name());
+            apply_aliases(&mut args);
             ParArgs::try_parse_from(args).map_err(anyhow::Error::from)
         })
         .and_then(command::run)
