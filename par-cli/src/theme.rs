@@ -1,9 +1,9 @@
 use clap::builder::styling::AnsiColor;
 use clap::builder::Styles;
-use once_cell::sync::Lazy;
 use par_dialog::dialog::Theme;
+use std::sync::LazyLock;
 
-pub static DIALOG_THEME: Lazy<Theme> = Lazy::new(Theme::default);
+pub static DIALOG_THEME: LazyLock<Theme> = LazyLock::new(Theme::default);
 
 pub fn clap_theme() -> Styles {
     Styles::styled()

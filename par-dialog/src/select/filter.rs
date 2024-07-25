@@ -1,10 +1,10 @@
 use crate::select::Item;
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
-use once_cell::sync;
 use ratatui::widgets::ListState;
+use std::sync::LazyLock;
 
-static MATCHER: sync::Lazy<SkimMatcherV2> = sync::Lazy::new(SkimMatcherV2::default);
+static MATCHER: LazyLock<SkimMatcherV2> = LazyLock::new(SkimMatcherV2::default);
 
 pub(super) struct FilteredItem<'a> {
     pub(super) item: &'a Item<'a>,
