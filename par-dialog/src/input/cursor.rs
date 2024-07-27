@@ -1,4 +1,4 @@
-use crate::dialog::Theme;
+use crate::theme::Theme;
 use ratatui::prelude::Style;
 
 #[derive(Debug, Default, Clone)]

@@ -1,6 +1,6 @@
-use crate::dialog::Theme;
 use crate::select::filter::{apply_filter, FilteredItem};
 use crate::select::SelectDialog;
+use crate::theme::Theme;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::prelude::{Line, Span, StatefulWidget, Widget};

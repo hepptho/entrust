@@ -1,7 +1,8 @@
-use crate::dialog::{Dialog, DialogState, Theme};
+use crate::dialog::{Dialog, DialogState};
 use crate::input::prompt::Prompt;
 use crate::input::InputDialog;
 use crate::select::filter::get_filtered;
+use crate::theme::Theme;
 use crate::{cancel_key_event, input, key_event_pattern as kep};
 use ratatui::crossterm::event::Event::Key;
 use ratatui::crossterm::event::{Event, KeyCode, KeyModifiers};

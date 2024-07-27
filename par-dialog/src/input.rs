@@ -7,11 +7,12 @@ mod widget;
 use std::io;
 use std::time::Duration;
 
-use crate::dialog::{Dialog, DialogState, Theme};
+use crate::dialog::{Dialog, DialogState};
 use crate::input::confirmation::Confirmation;
 use crate::input::cursor::{Cursor, CursorMode};
 use crate::input::prompt::Prompt;
 use crate::input::validator::Validator;
+use crate::theme::Theme;
 use crate::{cancel_key_event, key_event_pattern as kep};
 use ratatui::crossterm::event::Event::Key;
 use ratatui::crossterm::event::{Event, KeyCode, KeyModifiers};

@@ -1,6 +1,6 @@
 use clap::builder::styling::AnsiColor;
 use clap::builder::Styles;
-use par_dialog::dialog::Theme;
+use par_dialog::theme::Theme;
 use std::sync::LazyLock;
 
 pub static DIALOG_THEME: LazyLock<Theme> = LazyLock::new(Theme::default);
