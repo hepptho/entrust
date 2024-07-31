@@ -1,5 +1,6 @@
 pub mod confirmation;
 pub mod cursor;
+pub mod mask;
 pub mod prompt;
 pub mod validator;
 mod widget;
@@ -10,6 +11,7 @@ use std::time::Duration;
 use crate::dialog::{Dialog, DialogState};
 use crate::input::confirmation::Confirmation;
 use crate::input::cursor::{Cursor, CursorMode};
+use crate::input::mask::InputMask;
 use crate::input::prompt::Prompt;
 use crate::input::validator::Validator;
 use crate::theme::Theme;
@@ -24,7 +26,7 @@ use tracing::debug;
 pub struct InputDialog {
     content: Vec<char>,
     cursor: Cursor,
-    hidden: bool,
+    mask: InputMask,
     prompt: Prompt,
     placeholder: &'static str,
     timeout: Option<Duration>,
@@ -58,8 +60,8 @@ impl InputDialog {
         self.cursor.set_cursor_mode(cursor_mode);
         self
     }
-    pub fn with_hidden(mut self, hidden: bool) -> Self {
-        self.hidden = hidden;
+    pub fn with_mask(mut self, mask: InputMask) -> Self {
+        self.mask = mask;
         self
     }
     pub fn with_validator(mut self, validator: Validator) -> Self {
@@ -87,7 +89,7 @@ pub enum Update {
     DeleteAfterCursor,
     MoveCursorLeft,
     MoveCursorRight,
-    ToggleHidden,
+    ToggleMask,
     Confirm,
     Cancel,
 }
@@ -100,7 +102,7 @@ impl Dialog for InputDialog {
         match event {
             Key(ke) => match ke {
                 cancel_key_event!() => Update::Cancel.into(),
-                kep!(KeyCode::Char('h'), KeyModifiers::ALT) => Update::ToggleHidden.into(),
+                kep!(KeyCode::Char('h'), KeyModifiers::ALT) => Update::ToggleMask.into(),
                 kep!(KeyCode::Char(char)) => Update::InsertChar(char).into(),
                 kep!(KeyCode::Backspace) => Update::DeleteBeforeCursor.into(),
                 kep!(KeyCode::Delete) => Update::DeleteAfterCursor.into(),
@@ -141,7 +143,7 @@ impl Dialog for InputDialog {
                     self.cursor.move_by(1);
                 }
             }
-            Update::ToggleHidden => self.hidden = !self.hidden,
+            Update::ToggleMask => self.mask.toggle(),
             Update::Confirm => {
                 if self.validation_message().is_none() {
                     Confirmation::confirm(self)

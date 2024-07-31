@@ -48,10 +48,10 @@ impl Widget for &mut InputDialog {
 
         // region render line
         let styled_prompt = Span::styled(inline_prompt, self.theme.prompt_style);
-        let line = if self.hidden {
+        let line = if self.mask.active {
             Line::from(vec![
                 styled_prompt,
-                String::from_iter(vec!['•'; self.content.len()]).into(),
+                String::from_iter(vec![self.mask.char; self.content.len()]).into(),
             ])
         } else if self.content.is_empty() {
             if self.placeholder.is_empty() {
