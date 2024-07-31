@@ -12,3 +12,12 @@ pub fn clap_theme() -> Styles {
         .literal(AnsiColor::BrightBlue.on_default().italic())
         .placeholder(AnsiColor::BrightBlack.on_default())
 }
+
+pub const CHEVRON: &str = "❯";
+
+macro_rules! chevron_prompt {
+    ($text: literal) => {
+        const_format::concatcp!($text, " ", crate::theme::CHEVRON, " ")
+    };
+}
+pub(crate) use chevron_prompt;

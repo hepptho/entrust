@@ -7,6 +7,7 @@ use std::{fs, io};
 use crate::command::BackendValueEnum;
 use crate::dialog;
 use crate::key::Key;
+use crate::theme::chevron_prompt;
 use par_core;
 use par_core::{git, Backend};
 
@@ -33,7 +34,9 @@ pub struct AddArgs {
 }
 
 pub fn run(store: PathBuf, args: AddArgs) -> anyhow::Result<()> {
-    let key = &args.key.unwrap_or_read_new("Key ❯ ", &store)?;
+    let key = &args
+        .key
+        .unwrap_or_read_new(chevron_prompt!("Key"), &store)?;
     encrypt(&store, key, args.backend.into())?;
     if !args.no_git {
         git::add(&store, key)?

@@ -1,5 +1,5 @@
 use crate::command::ParSubcommand;
-use crate::theme::DIALOG_THEME;
+use crate::theme::{CHEVRON, DIALOG_THEME};
 use par_core::Backend;
 use par_dialog::dialog::Dialog;
 use par_dialog::input::prompt::Prompt;
@@ -31,8 +31,9 @@ fn create_recipient_file_if_not_present(backend: Backend, store: &Path) -> anyho
         return Ok(());
     }
     let prompt = format!(
-        "{} recipient for which the file should be created ❯",
-        backend.display_name()
+        "{} recipient for which the file should be created {} ",
+        backend.display_name(),
+        CHEVRON
     );
     // TODO leaking is fine here but maybe we can do better
     let recipient = InputDialog::default()

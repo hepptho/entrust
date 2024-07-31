@@ -1,4 +1,4 @@
-use crate::theme::DIALOG_THEME;
+use crate::theme::{chevron_prompt, DIALOG_THEME};
 use par_core::get_existing_locations;
 use par_dialog::dialog::Dialog;
 use par_dialog::input::confirmation::{Confirmation, ConfirmationMessageType};
@@ -31,7 +31,7 @@ pub fn read_password_interactive(initial: &str) -> anyhow::Result<String> {
     };
     let mut dialog = InputDialog::default()
         .with_content(initial)
-        .with_prompt(Prompt::inline("Enter new password ❯ "))
+        .with_prompt(Prompt::inline(chevron_prompt!("Enter new password")))
         .with_validator(Validator::not_empty("The password must not be empty."))
         .with_mask(mask)
         .with_theme(DIALOG_THEME.deref());
@@ -44,8 +44,8 @@ pub fn read_password_interactive(initial: &str) -> anyhow::Result<String> {
 
 fn match_confirmation() -> Confirmation {
     Confirmation::new(
-        "Confirm password   ❯ ",
-        "The entered passwords do not match ❯ ",
+        chevron_prompt!("Confirm password  "),
+        chevron_prompt!("The entered passwords do not match"),
         ConfirmationMessageType::Inline,
     )
 }

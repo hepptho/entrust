@@ -1,6 +1,7 @@
 use crate::alias::apply_aliases;
 use crate::command;
 use crate::command::{bin_name, ParArgs};
+use crate::theme::chevron_prompt;
 use anyhow::anyhow;
 use clap::Parser;
 use par_core::age;
@@ -12,7 +13,7 @@ pub fn run() -> anyhow::Result<()> {
     age::initialize_identity()?;
     loop {
         let input = InputDialog::default()
-            .with_prompt(Prompt::inline("par ❯ "))
+            .with_prompt(Prompt::inline(chevron_prompt!("par")))
             .run()?;
         if input.is_empty() {
             continue;
