@@ -41,18 +41,18 @@ pub fn run(store: PathBuf, args: EditArgs) -> anyhow::Result<()> {
     let key = &args.key.unwrap_or_select_existing(&store)?;
     let location = resolve_existing_location(&store, key, false)?;
 
+    let edited = if stdin().is_terminal() {
+        edit_interactive(args.cleartext, &location)
+    } else {
+        edit_non_interactive()
+    }?;
+
     let mut bak = location.clone();
     bak.as_mut_os_string().push(".bak");
     fs::rename(&location, &bak)?;
 
-    let edited = if stdin().is_terminal() {
-        edit_interactive(args.cleartext, &bak)
-    } else {
-        edit_non_interactive()
-    };
-
     let encryption_result =
-        edited.and_then(|e| Backend::from(args.backend).encrypt(e.as_bytes(), &store, &location));
+        Backend::from(args.backend).encrypt(edited.as_bytes(), &store, &location);
     if encryption_result.is_ok() {
         git::edit(&store, key)?;
         fs::remove_file(bak)?;
