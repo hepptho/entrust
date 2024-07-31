@@ -1,4 +1,3 @@
-use crate::input::confirmation::ConfirmationMessageType;
 use crate::input::InputDialog;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Layout, Rect};
@@ -11,26 +10,12 @@ impl Widget for &mut InputDialog {
     where
         Self: Sized,
     {
-        let (header_prompt, inline_prompt) = self
-            .confirmation
-            .as_ref()
-            .and_then(|c| {
-                if c.first_input.is_some() {
-                    Some(c)
-                } else {
-                    None
-                }
-            })
-            .map(|c| match c.message_type {
-                ConfirmationMessageType::Header => (c.message(), self.prompt.inline),
-                ConfirmationMessageType::Inline => (self.prompt.header, c.message()),
-            })
-            .unwrap_or((self.prompt.header, self.prompt.inline));
+        let prompt = self.prompt_with_confirmation();
 
         let validation_message = self.validation_message();
 
         let (header_area, input_area, validation_area) = {
-            let header_height = if header_prompt.is_empty() { 0 } else { 1 };
+            let header_height = if prompt.header.is_empty() { 0 } else { 1 };
             let validation_height = validation_message.map(|m| m.lines().count()).unwrap_or(0);
             let rects = Layout::vertical(vec![
                 Constraint::Length(header_height),
@@ -41,12 +26,20 @@ impl Widget for &mut InputDialog {
             (rects[0], rects[1], rects[2])
         };
 
-        // region render header
-        Paragraph::new(Line::styled(header_prompt, self.theme.header_style))
+        Paragraph::new(Line::styled(prompt.header, self.theme.header_style))
             .render(header_area, buf);
-        // endregion
 
-        // region render line
+        self.render_input(buf, prompt.inline, input_area);
+
+        if let Some(message) = validation_message {
+            Paragraph::new(Line::styled(message, Style::from(Color::LightRed)))
+                .render(validation_area, buf);
+        }
+    }
+}
+
+impl InputDialog {
+    fn render_input(&self, buf: &mut Buffer, inline_prompt: &str, input_area: Rect) {
         let styled_prompt = Span::styled(inline_prompt, self.theme.prompt_style);
         let line = if self.mask.active {
             Line::from(vec![
@@ -77,13 +70,5 @@ impl Widget for &mut InputDialog {
             ])
         };
         Paragraph::new(line).render(input_area, buf);
-        // endregion
-
-        // region validation
-        if let Some(message) = validation_message {
-            Paragraph::new(Line::styled(message, Style::from(Color::LightRed)))
-                .render(validation_area, buf);
-        }
-        // endregion
     }
 }

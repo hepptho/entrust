@@ -18,19 +18,13 @@ impl Validator {
 
 impl Default for Validator {
     fn default() -> Self {
-        Validator {
-            message: "",
-            predicate: Box::new(|_| true),
-        }
+        Validator::new("", |_| true)
     }
 }
 
 impl Validator {
     pub fn not_empty(message: &'static str) -> Self {
-        Validator {
-            message,
-            predicate: Box::new(|vec| !vec.is_empty()),
-        }
+        Validator::new(message, |vec| !vec.is_empty())
     }
 }
 

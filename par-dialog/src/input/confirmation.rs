@@ -1,5 +1,7 @@
 use crate::dialog::DialogState;
+use crate::input::prompt::Prompt;
 use crate::input::InputDialog;
+use std::borrow::Cow;
 use std::mem;
 
 #[derive(Debug, Clone)]
@@ -53,6 +55,26 @@ impl Confirmation {
     }
 }
 
+impl InputDialog {
+    pub(super) fn prompt_with_confirmation(&self) -> Cow<Prompt> {
+        self.confirmation
+            .as_ref()
+            .and_then(|c| {
+                if c.first_input.is_some() {
+                    Some(c)
+                } else {
+                    None
+                }
+            })
+            .map(|c| match c.message_type {
+                ConfirmationMessageType::Header => Prompt::new(c.message(), self.prompt.inline),
+                ConfirmationMessageType::Inline => Prompt::new(self.prompt.header, c.message()),
+            })
+            .map(Cow::Owned)
+            .unwrap_or(Cow::Borrowed(&self.prompt))
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ConfirmationMessageType {
     Header,
@@ -67,14 +89,21 @@ mod tests {
 
     #[test]
     fn test() {
-        let mut dialog = InputDialog::default().with_confirmation(Confirmation::new(
-            "repeat",
-            "no match",
-            ConfirmationMessageType::Header,
-        ));
+        let prompt_header = "header prompt";
+        let prompt_inline = "inline prompt";
+        let confirmation_message = "repeat";
+        let incorrect_message = "no match";
+        let mut dialog = InputDialog::default()
+            .with_prompt(Prompt::new(prompt_header, prompt_inline))
+            .with_confirmation(Confirmation::new(
+                confirmation_message,
+                incorrect_message,
+                ConfirmationMessageType::Header,
+            ));
 
         dialog.perform_update(Update::InsertChar('a')).unwrap();
         assert_eq!(None, dialog.confirmation.as_ref().unwrap().first_input);
+        assert_eq!(prompt_header, dialog.prompt_with_confirmation().header);
 
         dialog.perform_update(Update::Confirm).unwrap();
         assert_eq!(
@@ -83,10 +112,15 @@ mod tests {
         );
         assert!(dialog.content.is_empty());
         assert!(!dialog.confirmation.as_ref().unwrap().answered_incorrectly);
+        assert_eq!(
+            confirmation_message,
+            dialog.prompt_with_confirmation().header
+        );
 
         dialog.perform_update(Update::InsertChar('b')).unwrap();
         dialog.perform_update(Update::Confirm).unwrap();
         assert!(dialog.confirmation.as_ref().unwrap().answered_incorrectly);
+        assert_eq!(incorrect_message, dialog.prompt_with_confirmation().header);
         assert_eq!(DialogState::Pending, dialog.state);
 
         dialog.perform_update(Update::DeleteBeforeCursor).unwrap();
