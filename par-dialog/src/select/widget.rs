@@ -75,8 +75,8 @@ impl<'a> Widget for &mut SelectDialog<'a> {
         if len > list_area.height as usize {
             let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight);
             let mut scrollbar_state = ScrollbarState::default()
-                .content_length(len)
-                .position(self.list_state.selected().unwrap_or(0));
+                .content_length(len - list_area.height as usize)
+                .position(self.list_state.offset());
             StatefulWidget::render(scrollbar, scrollbar_area, buf, &mut scrollbar_state);
         }
     }
