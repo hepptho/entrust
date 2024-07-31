@@ -35,9 +35,8 @@ fn create_recipient_file_if_not_present(backend: Backend, store: &Path) -> anyho
         backend.display_name(),
         CHEVRON
     );
-    // TODO leaking is fine here but maybe we can do better
     let recipient = InputDialog::default()
-        .with_prompt(Prompt::inline(prompt.leak()))
+        .with_prompt(Prompt::inline(prompt))
         .with_theme(DIALOG_THEME.deref())
         .run()?;
     fs::write(file, recipient.as_bytes())?;

@@ -1,17 +1,32 @@
+use std::borrow::Cow;
+
 #[derive(Debug, Default, Clone)]
 pub struct Prompt {
-    pub(super) header: &'static str,
-    pub(super) inline: &'static str,
+    pub(super) header: Cow<'static, str>,
+    pub(super) inline: Cow<'static, str>,
 }
 
 impl Prompt {
-    pub fn new(header: &'static str, inline: &'static str) -> Self {
-        Prompt { header, inline }
+    pub fn new<H, I>(header: H, inline: I) -> Self
+    where
+        H: Into<Cow<'static, str>>,
+        I: Into<Cow<'static, str>>,
+    {
+        Prompt {
+            header: header.into(),
+            inline: inline.into(),
+        }
     }
-    pub fn header(header: &'static str) -> Self {
-        Prompt { header, inline: "" }
+    pub fn header<H>(header: H) -> Self
+    where
+        H: Into<Cow<'static, str>>,
+    {
+        Prompt::new(header, "")
     }
-    pub fn inline(inline: &'static str) -> Self {
-        Prompt { header: "", inline }
+    pub fn inline<I>(inline: I) -> Self
+    where
+        I: Into<Cow<'static, str>>,
+    {
+        Prompt::new("", inline)
     }
 }

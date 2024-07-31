@@ -1,7 +1,6 @@
 use crate::dialog::DialogState;
 use crate::input::prompt::Prompt;
 use crate::input::InputDialog;
-use std::borrow::Cow;
 use std::mem;
 
 #[derive(Debug, Clone)]
@@ -56,7 +55,7 @@ impl Confirmation {
 }
 
 impl InputDialog {
-    pub(super) fn prompt_with_confirmation(&self) -> Cow<Prompt> {
+    pub(super) fn prompt_with_confirmation(&self) -> PromptWithConfirmation {
         self.confirmation
             .as_ref()
             .and_then(|c| {
@@ -67,11 +66,39 @@ impl InputDialog {
                 }
             })
             .map(|c| match c.message_type {
-                ConfirmationMessageType::Header => Prompt::new(c.message(), self.prompt.inline),
-                ConfirmationMessageType::Inline => Prompt::new(self.prompt.header, c.message()),
+                ConfirmationMessageType::Header => PromptWithConfirmation {
+                    prompt: &self.prompt,
+                    header_confirmation: Some(c.message()),
+                    inline_confirmation: None,
+                },
+                ConfirmationMessageType::Inline => PromptWithConfirmation {
+                    prompt: &self.prompt,
+                    header_confirmation: None,
+                    inline_confirmation: Some(c.message()),
+                },
             })
-            .map(Cow::Owned)
-            .unwrap_or(Cow::Borrowed(&self.prompt))
+            .unwrap_or(PromptWithConfirmation {
+                prompt: &self.prompt,
+                header_confirmation: None,
+                inline_confirmation: None,
+            })
+    }
+}
+
+pub(super) struct PromptWithConfirmation<'p> {
+    prompt: &'p Prompt,
+    header_confirmation: Option<&'p str>,
+    inline_confirmation: Option<&'p str>,
+}
+
+impl<'p> PromptWithConfirmation<'p> {
+    pub(super) fn header(&self) -> &str {
+        self.header_confirmation
+            .unwrap_or(self.prompt.header.as_ref())
+    }
+    pub(super) fn inline(&self) -> &str {
+        self.inline_confirmation
+            .unwrap_or(self.prompt.inline.as_ref())
     }
 }
 
@@ -103,7 +130,7 @@ mod tests {
 
         dialog.perform_update(Update::InsertChar('a')).unwrap();
         assert_eq!(None, dialog.confirmation.as_ref().unwrap().first_input);
-        assert_eq!(prompt_header, dialog.prompt_with_confirmation().header);
+        assert_eq!(prompt_header, dialog.prompt_with_confirmation().header());
 
         dialog.perform_update(Update::Confirm).unwrap();
         assert_eq!(
@@ -114,13 +141,16 @@ mod tests {
         assert!(!dialog.confirmation.as_ref().unwrap().answered_incorrectly);
         assert_eq!(
             confirmation_message,
-            dialog.prompt_with_confirmation().header
+            dialog.prompt_with_confirmation().header()
         );
 
         dialog.perform_update(Update::InsertChar('b')).unwrap();
         dialog.perform_update(Update::Confirm).unwrap();
         assert!(dialog.confirmation.as_ref().unwrap().answered_incorrectly);
-        assert_eq!(incorrect_message, dialog.prompt_with_confirmation().header);
+        assert_eq!(
+            incorrect_message,
+            dialog.prompt_with_confirmation().header()
+        );
         assert_eq!(DialogState::Pending, dialog.state);
 
         dialog.perform_update(Update::DeleteBeforeCursor).unwrap();
