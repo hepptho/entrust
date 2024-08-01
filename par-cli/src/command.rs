@@ -4,6 +4,7 @@ pub mod completions;
 pub mod edit;
 pub mod generate;
 pub mod get;
+mod identity;
 pub mod r#move;
 pub mod remove;
 mod shell;
@@ -86,14 +87,16 @@ pub enum ParSubcommand {
     Remove(RemoveArgs),
     #[command(about = generate::ABOUT, alias = "gen")]
     Generate(GenerateArgs),
-    #[command(hide = true)]
-    ClearClipboard(ClearClipboardArgs),
-    #[command(hide = true)]
-    Shell,
     #[command(about = completions::ABOUT)]
     Completions(CompletionsArgs),
     #[command(about = "Print a tree of the password store")]
     Tree,
+    #[command(hide = true)]
+    ClearClipboard(ClearClipboardArgs),
+    #[command(hide = true)]
+    Shell,
+    #[command(hide = true)]
+    Identity,
 }
 
 pub fn run(par: ParArgs) -> anyhow::Result<()> {
@@ -107,17 +110,18 @@ pub fn run(par: ParArgs) -> anyhow::Result<()> {
         Some(ParSubcommand::Get(args)) => get::run(par.store, args),
         Some(ParSubcommand::Move(args)) => r#move::run(par.store, args),
         Some(ParSubcommand::Remove(args)) => remove::run(par.store, args),
-        Some(ParSubcommand::Shell) => shell::run(),
-        Some(ParSubcommand::Completions(args)) => {
-            completions::run(args);
-            Ok(())
-        }
         Some(ParSubcommand::Tree) => print_tree(&par.store),
         None => {
             ParArgs::command().print_help()?;
             print_tree(&par.store)?;
             Ok(())
         }
+        Some(ParSubcommand::Completions(args)) => {
+            completions::run(args);
+            Ok(())
+        }
+        Some(ParSubcommand::Shell) => shell::run(),
+        Some(ParSubcommand::Identity) => identity::run(),
     }
 }
 

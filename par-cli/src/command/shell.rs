@@ -10,7 +10,7 @@ use par_dialog::input::prompt::Prompt;
 use par_dialog::input::InputDialog;
 
 pub fn run() -> anyhow::Result<()> {
-    age::initialize_identity()?;
+    age::identity::get_identity()?;
     loop {
         let input = InputDialog::default()
             .with_prompt(Prompt::inline(chevron_prompt!("par")))

@@ -1,4 +1,4 @@
-mod identity;
+pub mod identity;
 
 use std::io;
 use std::io::Read;
@@ -44,9 +44,4 @@ pub fn decrypt(path: &Path) -> anyhow::Result<String> {
     drop(child_stdin);
     let output = child.wait_with_output()?;
     output_to_result(output)
-}
-
-pub fn initialize_identity() -> anyhow::Result<()> {
-    get_identity()?;
-    Ok(())
 }
