@@ -2,6 +2,7 @@ pub mod dialog;
 pub mod input;
 pub mod select;
 pub mod theme;
+pub mod yes_no;
 
 pub use ratatui::style;
 pub use ratatui::text;
