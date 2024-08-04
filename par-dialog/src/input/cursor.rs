@@ -86,11 +86,12 @@ pub enum CursorMode {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::dialog::Dialog;
     use crate::input::{InputDialog, Update};
 
     #[test]
-    fn test() {
+    fn test_index() {
         let mut state = InputDialog::default();
         state.perform_update(Update::InsertChar('1')).unwrap();
         assert_eq!(vec!['1'], state.content);
@@ -111,5 +112,36 @@ mod tests {
         state.perform_update(Update::InsertChar('0')).unwrap();
         assert_eq!(vec!['0', '1', '2'], state.content);
         assert_eq!(1, state.cursor.index());
+    }
+
+    #[test]
+    fn test_state() {
+        let mut blink_cursor = Cursor {
+            index: 0,
+            state: CursorState::On,
+            mode: CursorMode::Blink,
+        };
+        let theme = Theme::default_ref();
+        assert_eq!(theme.cursor_on_style, blink_cursor.current_style(theme));
+        blink_cursor.tick();
+        assert_eq!(theme.cursor_off_style, blink_cursor.current_style(theme));
+
+        let mut hidden_cursor = Cursor {
+            index: 0,
+            state: CursorState::On,
+            mode: CursorMode::Hide,
+        };
+        assert_eq!(theme.cursor_off_style, hidden_cursor.current_style(theme));
+        hidden_cursor.tick();
+        assert_eq!(theme.cursor_off_style, hidden_cursor.current_style(theme));
+
+        let mut static_cursor = Cursor {
+            index: 0,
+            state: CursorState::On,
+            mode: CursorMode::Static,
+        };
+        assert_eq!(theme.cursor_on_style, static_cursor.current_style(theme));
+        static_cursor.tick();
+        assert_eq!(theme.cursor_on_style, static_cursor.current_style(theme));
     }
 }
