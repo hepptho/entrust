@@ -143,7 +143,7 @@ impl<'a> Dialog for SelectDialog<'a> {
     }
 
     fn draw(&mut self, frame: &mut Frame) {
-        frame.render_widget(self, frame.size());
+        frame.render_widget(self, frame.area());
     }
 
     fn tick(&mut self) -> bool {
