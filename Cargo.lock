@@ -650,7 +650,6 @@ dependencies = [
  "color-print",
  "const_format",
  "copypasta",
- "crossterm",
  "itertools",
  "par-core",
  "par-dialog",

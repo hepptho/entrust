@@ -1,4 +1,4 @@
-use crossterm::style::Stylize;
+use color_print::cformat;
 use par_core;
 use rand::prelude::SliceRandom;
 use std::cmp::min;
@@ -18,7 +18,7 @@ fn advance_and_print_state(pass: &str, state: &mut [Option<char>], i: usize) {
     state[i] = pass.chars().nth(i);
     let s = state.iter().fold(String::new(), |mut acc, &elem| {
         if let Some(char) = elem {
-            acc.push_str(format!("{}", char.bold()).as_str());
+            acc.push_str(cformat!("<bold>{char}</>").as_str());
         } else {
             acc.push(par_core::random_ascii());
         }
