@@ -50,7 +50,7 @@ impl InputDialog {
             if self.placeholder.is_empty() {
                 Line::from(vec![
                     styled_prompt,
-                    Span::styled(" ", self.cursor.current_style(self.theme)),
+                    Span::styled(" ", self.cursor.current_style(&self.theme)),
                 ])
             } else {
                 Line::from(vec![
@@ -65,7 +65,10 @@ impl InputDialog {
             Line::from(vec![
                 styled_prompt,
                 before_cursor.iter().collect::<String>().into(),
-                Span::styled(at_cursor.to_string(), self.cursor.current_style(self.theme)),
+                Span::styled(
+                    at_cursor.to_string(),
+                    self.cursor.current_style(&self.theme),
+                ),
                 after_cursor.into(),
             ])
         };

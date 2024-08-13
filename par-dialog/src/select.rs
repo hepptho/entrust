@@ -20,7 +20,7 @@ pub struct SelectDialog<'a> {
     items: Vec<Item<'a>>,
     list_state: ListState,
     height: u8,
-    theme: &'static Theme,
+    theme: Cow<'static, Theme>,
     filter_dialog: Option<InputDialog>,
     state: DialogState,
 }
@@ -45,7 +45,7 @@ impl<'a> SelectDialog<'a> {
             .enumerate()
             .map(|(index, content)| Item { index, content })
             .collect();
-        let theme = Theme::default_ref();
+        let theme = Cow::Borrowed(Theme::default_ref());
         let filter = InputDialog::default()
             .with_prompt(Prompt::inline("  "))
             .with_placeholder("type to filter...")
@@ -59,8 +59,8 @@ impl<'a> SelectDialog<'a> {
             state: DialogState::Pending,
         }
     }
-    pub fn with_theme(mut self, theme: &'static Theme) -> Self {
-        self.theme = theme;
+    pub fn with_theme<T: Into<Cow<'static, Theme>>>(mut self, theme: T) -> Self {
+        self.theme = theme.into();
         self
     }
     pub fn with_height(mut self, height: u8) -> Self {

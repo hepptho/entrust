@@ -5,6 +5,7 @@ pub mod prompt;
 pub mod validator;
 mod widget;
 
+use std::borrow::Cow;
 use std::io;
 use std::time::Duration;
 
@@ -33,7 +34,7 @@ pub struct InputDialog {
     validator: Validator,
     confirmation: Option<Confirmation>,
     state: DialogState,
-    theme: &'static Theme,
+    theme: Cow<'static, Theme>,
 }
 
 impl InputDialog {
@@ -72,8 +73,8 @@ impl InputDialog {
         self.confirmation = Some(confirmation);
         self
     }
-    pub fn with_theme(mut self, theme: &'static Theme) -> Self {
-        self.theme = theme;
+    pub fn with_theme<T: Into<Cow<'static, Theme>>>(mut self, theme: T) -> Self {
+        self.theme = theme.into();
         self
     }
 

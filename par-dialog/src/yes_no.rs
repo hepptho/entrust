@@ -6,6 +6,7 @@ use crate::input::InputDialog;
 use crate::theme::Theme;
 use ratatui::crossterm::event::Event;
 use ratatui::{Frame, Viewport};
+use std::borrow::Cow;
 
 #[derive(Debug)]
 pub struct YesNoDialog {
@@ -31,7 +32,7 @@ impl YesNoDialog {
         self
     }
 
-    pub fn with_theme(mut self, theme: &'static Theme) -> Self {
+    pub fn with_theme<T: Into<Cow<'static, Theme>>>(mut self, theme: T) -> Self {
         self.inner = self.inner.with_theme(theme);
         self
     }

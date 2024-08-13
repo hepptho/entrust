@@ -56,7 +56,7 @@ impl<'a> Widget for &mut SelectDialog<'a> {
             );
             filtered
                 .iter()
-                .map(|s| render_filtered_item(s, self.theme))
+                .map(|s| render_filtered_item(s, &self.theme))
                 .collect()
         } else {
             self.items

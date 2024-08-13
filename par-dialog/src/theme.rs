@@ -1,4 +1,5 @@
 use ratatui::prelude::{Style, Stylize};
+use std::borrow::Cow;
 use std::ops::Deref;
 use std::sync::LazyLock;
 
@@ -39,5 +40,17 @@ impl Theme {
     pub fn default_ref() -> &'static Theme {
         static THEME: LazyLock<Theme> = LazyLock::new(Theme::default);
         THEME.deref()
+    }
+}
+
+impl From<Theme> for Cow<'static, Theme> {
+    fn from(value: Theme) -> Self {
+        Cow::Owned(value)
+    }
+}
+
+impl<'a> From<&'a Theme> for Cow<'a, Theme> {
+    fn from(value: &'a Theme) -> Self {
+        Cow::Borrowed(value)
     }
 }
