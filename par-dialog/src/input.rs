@@ -28,7 +28,7 @@ pub struct InputDialog {
     content: Vec<char>,
     cursor: Cursor,
     mask: InputMask,
-    prompt: Prompt,
+    prompt: Prompt<'static>,
     placeholder: &'static str,
     timeout: Option<Duration>,
     validator: Validator,
@@ -45,7 +45,7 @@ impl InputDialog {
         self.cursor.set_index(cursor_index);
         self
     }
-    pub fn with_prompt(mut self, prompt: Prompt) -> Self {
+    pub fn with_prompt(mut self, prompt: Prompt<'static>) -> Self {
         self.prompt = prompt;
         self
     }
