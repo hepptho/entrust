@@ -15,7 +15,7 @@ impl Widget for &mut InputDialog {
         let validation_message = self.validation_message();
 
         let (header_area, input_area, validation_area) = {
-            let header_height = if header_prompt.is_empty() { 0 } else { 1 };
+            let header_height = if header_prompt.spans.is_empty() { 0 } else { 1 };
             let validation_height = validation_message.map(|m| m.lines().count()).unwrap_or(0);
             let rects = Layout::vertical(vec![
                 Constraint::Length(header_height),
@@ -26,8 +26,8 @@ impl Widget for &mut InputDialog {
             (rects[0], rects[1], rects[2])
         };
 
-        Paragraph::new(Line::styled(header_prompt, self.theme.header_style))
-            .render(header_area, buf);
+        let header_prompt = header_prompt.patch_style(self.theme.header_style);
+        Paragraph::new(header_prompt).render(header_area, buf);
 
         self.render_input(buf, inline_prompt, input_area);
 
@@ -39,38 +39,29 @@ impl Widget for &mut InputDialog {
 }
 
 impl InputDialog {
-    fn render_input(&self, buf: &mut Buffer, inline_prompt: &str, input_area: Rect) {
-        let styled_prompt = Span::styled(inline_prompt, self.theme.prompt_style);
-        let line = if self.mask.active {
-            Line::from(vec![
-                styled_prompt,
-                String::from_iter(vec![self.mask.char; self.content.len()]).into(),
-            ])
+    fn render_input(&self, buf: &mut Buffer, inline_prompt: Line, input_area: Rect) {
+        let mut line = inline_prompt.patch_style(self.theme.prompt_style);
+        if self.mask.active {
+            line.push_span(String::from_iter(vec![self.mask.char; self.content.len()]))
         } else if self.content.is_empty() {
             if self.placeholder.is_empty() {
-                Line::from(vec![
-                    styled_prompt,
-                    Span::styled(" ", self.cursor.current_style(&self.theme)),
-                ])
+                line.push_span(Span::styled(" ", self.cursor.current_style(&self.theme)))
             } else {
-                Line::from(vec![
-                    styled_prompt,
-                    Span::styled(self.placeholder, self.theme.placeholder_style),
-                ])
+                line.push_span(Span::styled(self.placeholder, self.theme.placeholder_style))
             }
         } else {
             let (before_cursor, from_cursor) = self.content.split_at(self.cursor.index());
             let at_cursor = from_cursor.iter().next().unwrap_or(&' ');
             let after_cursor: String = from_cursor.iter().skip(1).collect();
-            Line::from(vec![
-                styled_prompt,
-                before_cursor.iter().collect::<String>().into(),
-                Span::styled(
-                    at_cursor.to_string(),
-                    self.cursor.current_style(&self.theme),
-                ),
-                after_cursor.into(),
-            ])
+            line.push_span(Span::styled(
+                before_cursor.iter().collect::<String>(),
+                Style::reset(),
+            ));
+            line.push_span(Span::styled(
+                at_cursor.to_string(),
+                Style::reset().patch(self.cursor.current_style(&self.theme)),
+            ));
+            line.push_span(Span::styled(after_cursor, Style::reset()));
         };
         Paragraph::new(line).render(input_area, buf);
     }

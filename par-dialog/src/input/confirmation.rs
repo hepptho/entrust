@@ -1,36 +1,41 @@
 use crate::dialog::DialogState;
 use crate::input::InputDialog;
+use ratatui::text::Line;
 use std::mem;
 
 #[derive(Debug, Clone)]
-pub struct Confirmation {
-    initial_message: &'static str,
-    incorrect_message: &'static str,
+pub struct Confirmation<'c> {
+    initial_message: Line<'c>,
+    incorrect_message: Line<'c>,
     pub(super) message_type: ConfirmationMessageType,
     pub(super) answered_incorrectly: bool,
     pub(super) first_input: Option<Vec<char>>,
 }
 
-impl Confirmation {
-    pub fn new(
-        initial_message: &'static str,
-        incorrect_message: &'static str,
+impl<'c> Confirmation<'c> {
+    pub fn new<M, I>(
+        initial_message: M,
+        incorrect_message: I,
         message_type: ConfirmationMessageType,
-    ) -> Self {
+    ) -> Self
+    where
+        M: Into<Line<'c>>,
+        I: Into<Line<'c>>,
+    {
         Confirmation {
-            initial_message,
-            incorrect_message,
+            initial_message: initial_message.into(),
+            incorrect_message: incorrect_message.into(),
             message_type,
             answered_incorrectly: false,
             first_input: None,
         }
     }
 
-    pub(super) fn message(&self) -> &'static str {
+    pub(super) fn message(&self) -> &Line {
         if self.answered_incorrectly {
-            self.incorrect_message
+            &self.incorrect_message
         } else {
-            self.initial_message
+            &self.initial_message
         }
     }
 
@@ -54,7 +59,7 @@ impl Confirmation {
 }
 
 impl InputDialog {
-    pub(super) fn prompt_with_confirmation(&self) -> (&str, &str) {
+    pub(super) fn prompt_with_confirmation(&self) -> (Line, Line) {
         self.confirmation
             .as_ref()
             .and_then(|c| {
@@ -65,10 +70,14 @@ impl InputDialog {
                 }
             })
             .map(|c| match c.message_type {
-                ConfirmationMessageType::Header => (c.message(), self.prompt.inline.as_ref()),
-                ConfirmationMessageType::Inline => (self.prompt.header.as_ref(), c.message()),
+                ConfirmationMessageType::Header => {
+                    (c.message().clone(), self.prompt.inline.clone())
+                }
+                ConfirmationMessageType::Inline => {
+                    (self.prompt.header.clone(), c.message().clone())
+                }
             })
-            .unwrap_or((self.prompt.header.as_ref(), self.prompt.inline.as_ref()))
+            .unwrap_or((self.prompt.header.clone(), self.prompt.inline.clone()))
     }
 }
 
@@ -101,7 +110,10 @@ mod tests {
 
         dialog.perform_update(Update::InsertChar('a')).unwrap();
         assert_eq!(None, dialog.confirmation.as_ref().unwrap().first_input);
-        assert_eq!(prompt_header, dialog.prompt_with_confirmation().0);
+        assert_eq!(
+            Line::raw(prompt_header),
+            dialog.prompt_with_confirmation().0
+        );
 
         dialog.perform_update(Update::Confirm).unwrap();
         assert_eq!(
@@ -110,12 +122,18 @@ mod tests {
         );
         assert!(dialog.content.is_empty());
         assert!(!dialog.confirmation.as_ref().unwrap().answered_incorrectly);
-        assert_eq!(confirmation_message, dialog.prompt_with_confirmation().0);
+        assert_eq!(
+            Line::raw(confirmation_message),
+            dialog.prompt_with_confirmation().0
+        );
 
         dialog.perform_update(Update::InsertChar('b')).unwrap();
         dialog.perform_update(Update::Confirm).unwrap();
         assert!(dialog.confirmation.as_ref().unwrap().answered_incorrectly);
-        assert_eq!(incorrect_message, dialog.prompt_with_confirmation().0);
+        assert_eq!(
+            Line::raw(incorrect_message),
+            dialog.prompt_with_confirmation().0
+        );
         assert_eq!(DialogState::Pending, dialog.state);
 
         dialog.perform_update(Update::DeleteBeforeCursor).unwrap();

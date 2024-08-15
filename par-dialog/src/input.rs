@@ -32,7 +32,7 @@ pub struct InputDialog {
     placeholder: &'static str,
     timeout: Option<Duration>,
     validator: Validator,
-    confirmation: Option<Confirmation>,
+    confirmation: Option<Confirmation<'static>>,
     state: DialogState,
     theme: Cow<'static, Theme>,
 }
@@ -69,7 +69,7 @@ impl InputDialog {
         self.validator = validator;
         self
     }
-    pub fn with_confirmation(mut self, confirmation: Confirmation) -> Self {
+    pub fn with_confirmation(mut self, confirmation: Confirmation<'static>) -> Self {
         self.confirmation = Some(confirmation);
         self
     }

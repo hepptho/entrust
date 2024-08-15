@@ -5,6 +5,7 @@ use crate::input::validator::Validator;
 use crate::input::InputDialog;
 use crate::theme::Theme;
 use ratatui::crossterm::event::Event;
+use ratatui::prelude::{Color, Span};
 use ratatui::{Frame, Viewport};
 use std::borrow::Cow;
 
@@ -13,10 +14,13 @@ pub struct YesNoDialog {
     inner: InputDialog,
 }
 
+const ORANGE: Color = Color::Rgb(255, 184, 108);
+
 impl Default for YesNoDialog {
     fn default() -> Self {
-        let inner =
-            InputDialog::default().with_validator(Validator::new("Choose yes or no", |vec| {
+        let inner = InputDialog::default()
+            .with_prompt(Prompt::inline(Span::styled("[y/N] > ", ORANGE)))
+            .with_validator(Validator::new("Choose yes or no", |vec| {
                 let mut string: String = vec.iter().collect();
                 string.make_ascii_lowercase();
                 "yes".starts_with(string.as_str()) || "no".starts_with(string.as_str())
@@ -26,8 +30,11 @@ impl Default for YesNoDialog {
 }
 
 impl YesNoDialog {
-    pub fn with_message(mut self, message: &str) -> Self {
-        let prompt = Prompt::inline(format!("{message} [y/N] > "));
+    pub fn with_message<M: Into<Cow<'static, str>>>(mut self, message: M) -> Self {
+        let prompt = Prompt::inline(vec![
+            Span::styled(message.into(), Color::LightBlue),
+            Span::styled(" [y/N] > ", ORANGE),
+        ]);
         self.inner = self.inner.with_prompt(prompt);
         self
     }

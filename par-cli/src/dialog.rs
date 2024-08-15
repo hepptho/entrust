@@ -42,7 +42,7 @@ pub fn read_password_interactive(initial: &str) -> anyhow::Result<String> {
     Ok(pass)
 }
 
-fn match_confirmation() -> Confirmation {
+fn match_confirmation() -> Confirmation<'static> {
     Confirmation::new(
         chevron_prompt!("Confirm password  "),
         chevron_prompt!("The entered passwords do not match"),
