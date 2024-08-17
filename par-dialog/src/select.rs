@@ -21,7 +21,7 @@ pub struct SelectDialog<'a> {
     list_state: ListState,
     height: u8,
     theme: Cow<'static, Theme>,
-    filter_dialog: Option<InputDialog>,
+    filter_dialog: Option<InputDialog<'static, 'static>>,
     state: DialogState,
 }
 

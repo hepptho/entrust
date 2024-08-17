@@ -58,7 +58,7 @@ impl<'c> Confirmation<'c> {
     }
 }
 
-impl InputDialog {
+impl<'p, 'c> InputDialog<'p, 'c> {
     pub(super) fn prompt_with_confirmation(&self) -> (Line, Line) {
         self.confirmation
             .as_ref()

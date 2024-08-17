@@ -11,7 +11,7 @@ use std::borrow::Cow;
 
 #[derive(Debug)]
 pub struct YesNoDialog {
-    inner: InputDialog,
+    inner: InputDialog<'static, 'static>,
 }
 
 const ORANGE: Color = Color::Rgb(255, 184, 108);

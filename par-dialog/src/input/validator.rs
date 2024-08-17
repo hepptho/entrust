@@ -28,7 +28,7 @@ impl Validator {
     }
 }
 
-impl InputDialog {
+impl<'p, 'c> InputDialog<'p, 'c> {
     pub fn validation_message(&self) -> Option<&'static str> {
         if (self.validator.predicate)(&self.content) {
             None

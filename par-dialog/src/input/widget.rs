@@ -5,7 +5,7 @@ use ratatui::prelude::{Line, Span, Widget};
 use ratatui::style::{Color, Style};
 use ratatui::widgets::Paragraph;
 
-impl Widget for &mut InputDialog {
+impl<'p, 'c> Widget for &mut InputDialog<'p, 'c> {
     fn render(self, area: Rect, buf: &mut Buffer)
     where
         Self: Sized,
@@ -38,7 +38,7 @@ impl Widget for &mut InputDialog {
     }
 }
 
-impl InputDialog {
+impl<'p, 'c> InputDialog<'p, 'c> {
     fn render_input(&self, buf: &mut Buffer, inline_prompt: Line, input_area: Rect) {
         let mut line = inline_prompt.patch_style(self.theme.prompt_style);
         if self.mask.active {

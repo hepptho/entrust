@@ -24,20 +24,20 @@ use ratatui::Viewport;
 use tracing::debug;
 
 #[derive(Debug, Default)]
-pub struct InputDialog {
+pub struct InputDialog<'p, 'c> {
     content: Vec<char>,
     cursor: Cursor,
     mask: InputMask,
-    prompt: Prompt<'static>,
+    prompt: Prompt<'p>,
     placeholder: &'static str,
     timeout: Option<Duration>,
     validator: Validator,
-    confirmation: Option<Confirmation<'static>>,
+    confirmation: Option<Confirmation<'c>>,
     state: DialogState,
     theme: Cow<'static, Theme>,
 }
 
-impl InputDialog {
+impl<'p, 'c> InputDialog<'p, 'c> {
     pub fn with_content(mut self, text: &str) -> Self {
         let text: Vec<char> = text.chars().collect();
         let cursor_index = text.len();
@@ -45,7 +45,7 @@ impl InputDialog {
         self.cursor.set_index(cursor_index);
         self
     }
-    pub fn with_prompt(mut self, prompt: Prompt<'static>) -> Self {
+    pub fn with_prompt(mut self, prompt: Prompt<'p>) -> Self {
         self.prompt = prompt;
         self
     }
@@ -69,7 +69,7 @@ impl InputDialog {
         self.validator = validator;
         self
     }
-    pub fn with_confirmation(mut self, confirmation: Confirmation<'static>) -> Self {
+    pub fn with_confirmation(mut self, confirmation: Confirmation<'c>) -> Self {
         self.confirmation = Some(confirmation);
         self
     }
@@ -95,7 +95,7 @@ pub enum Update {
     Cancel,
 }
 
-impl Dialog for InputDialog {
+impl<'p, 'c> Dialog for InputDialog<'p, 'c> {
     type Update = Update;
     type Output = String;
 
