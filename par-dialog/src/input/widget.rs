@@ -41,27 +41,63 @@ impl<'p, 'c> Widget for &mut InputDialog<'p, 'c> {
 impl<'p, 'c> InputDialog<'p, 'c> {
     fn render_input(&self, buf: &mut Buffer, inline_prompt: Line, input_area: Rect) {
         let mut line = inline_prompt.patch_style(self.theme.prompt_style);
+        let completion = self.get_end_completion().unwrap_or("");
+        let cursor_style = Style::reset().patch(self.cursor.current_style(&self.theme));
         if self.mask.active {
             line.push_span(String::from_iter(vec![self.mask.char; self.content.len()]))
         } else if self.content.is_empty() {
-            if self.placeholder.is_empty() {
-                line.push_span(Span::styled(" ", self.cursor.current_style(&self.theme)))
+            if !self.placeholder.is_empty() {
+                line.push_span(Span::styled(
+                    self.placeholder,
+                    Style::reset().patch(self.theme.placeholder_style),
+                ))
+            } else if !completion.is_empty() {
+                line.push_span(Span::styled(
+                    &completion[0..1],
+                    cursor_style.patch(self.theme.completion_style),
+                ));
+                if completion.len() > 1 {
+                    line.push_span(Span::styled(
+                        &completion[1..],
+                        Style::reset().patch(self.theme.completion_style),
+                    ));
+                }
             } else {
-                line.push_span(Span::styled(self.placeholder, self.theme.placeholder_style))
+                line.push_span(Span::styled(" ", cursor_style));
             }
         } else {
             let (before_cursor, from_cursor) = self.content.split_at(self.cursor.index());
-            let at_cursor = from_cursor.iter().next().unwrap_or(&' ');
+            let completion_first_char = completion.chars().next();
+            let (at_cursor, is_cursor_at_completion) = {
+                if from_cursor.is_empty() {
+                    (completion_first_char.unwrap_or(' '), true)
+                } else {
+                    (*from_cursor.iter().next().unwrap(), false)
+                }
+            };
             let after_cursor: String = from_cursor.iter().skip(1).collect();
             line.push_span(Span::styled(
                 before_cursor.iter().collect::<String>(),
                 Style::reset(),
             ));
-            line.push_span(Span::styled(
-                at_cursor.to_string(),
-                Style::reset().patch(self.cursor.current_style(&self.theme)),
-            ));
+            let at_cursor_style = if is_cursor_at_completion {
+                cursor_style.patch(self.theme.completion_style)
+            } else {
+                cursor_style
+            };
+            line.push_span(Span::styled(at_cursor.to_string(), at_cursor_style));
             line.push_span(Span::styled(after_cursor, Style::reset()));
+            if !completion.is_empty() {
+                let remaining_completion = if is_cursor_at_completion {
+                    &completion[1..]
+                } else {
+                    completion
+                };
+                line.push_span(Span::styled(
+                    remaining_completion,
+                    Style::reset().patch(self.theme.completion_style),
+                ))
+            }
         };
         Paragraph::new(line).render(input_area, buf);
     }

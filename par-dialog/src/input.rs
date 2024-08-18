@@ -1,3 +1,4 @@
+mod completions;
 pub mod confirmation;
 pub mod cursor;
 pub mod mask;
@@ -27,6 +28,7 @@ use tracing::debug;
 pub struct InputDialog<'p, 'c> {
     content: Vec<char>,
     cursor: Cursor,
+    completions: Vec<Cow<'static, str>>,
     mask: InputMask,
     prompt: Prompt<'p>,
     placeholder: &'static str,
@@ -75,6 +77,10 @@ impl<'p, 'c> InputDialog<'p, 'c> {
     }
     pub fn with_theme<T: Into<Cow<'static, Theme>>>(mut self, theme: T) -> Self {
         self.theme = theme.into();
+        self
+    }
+    pub fn with_completions(mut self, completions: Vec<Cow<'static, str>>) -> Self {
+        self.completions = completions;
         self
     }
 
@@ -142,6 +148,9 @@ impl<'p, 'c> Dialog for InputDialog<'p, 'c> {
             Update::MoveCursorRight => {
                 if self.cursor.index() < self.content.len() {
                     self.cursor.move_by(1);
+                } else if let Some(completion) = self.get_full_completion() {
+                    self.content = completion.chars().collect();
+                    self.cursor.set_index(self.content.len());
                 }
             }
             Update::ToggleMask => self.mask.toggle(),

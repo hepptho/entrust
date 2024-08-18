@@ -13,6 +13,7 @@ pub struct Theme {
     pub prompt_style: Style,
     pub selected_style: Style,
     pub match_style: Style,
+    pub completion_style: Style,
 }
 
 impl Default for Theme {
@@ -26,6 +27,7 @@ impl Default for Theme {
             select_indicator: "• ".to_string(),
             selected_style: Style::new().bold(),
             match_style: Style::new().light_blue().underlined(),
+            completion_style: Style::new().dim().italic(),
         }
     }
 }

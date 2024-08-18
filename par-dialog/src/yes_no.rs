@@ -24,7 +24,8 @@ impl Default for YesNoDialog {
                 let mut string: String = vec.iter().collect();
                 string.make_ascii_lowercase();
                 "yes".starts_with(string.as_str()) || "no".starts_with(string.as_str())
-            }));
+            }))
+            .with_completions(vec!["yes".into(), "no".into()]);
         YesNoDialog { inner }
     }
 }
