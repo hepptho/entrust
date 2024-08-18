@@ -4,7 +4,7 @@ use par_dialog::dialog::Dialog;
 use par_dialog::input::confirmation::{Confirmation, ConfirmationMessageType};
 use par_dialog::input::mask::InputMask;
 use par_dialog::input::prompt::Prompt;
-use par_dialog::input::validator::Validator;
+use par_dialog::input::validator::{validate_filename, Validator};
 use par_dialog::input::InputDialog;
 use par_dialog::select::SelectDialog;
 use std::borrow::Cow;
@@ -53,10 +53,16 @@ fn match_confirmation() -> Confirmation<'static> {
 
 pub fn read_new_key_interactive(prompt: &'static str, store: &Path) -> anyhow::Result<String> {
     let existing = get_existing_locations(store)?;
-    let predicate = move |vec: &Vec<char>| !existing.files.contains(&vec.iter().collect());
+    let validator = Validator::new(move |vec| {
+        validate_filename()(vec).or(if existing.files.contains(&vec.iter().collect()) {
+            Some("Key already exists".into())
+        } else {
+            None
+        })
+    });
     let new_key = InputDialog::default()
         .with_prompt(Prompt::inline(prompt))
-        .with_validator(Validator::new("Key already exists", predicate))
+        .with_validator(validator)
         .with_completions(existing.dirs.into_iter().map(Cow::Owned).collect())
         .with_theme(DIALOG_THEME.deref())
         .run()?;

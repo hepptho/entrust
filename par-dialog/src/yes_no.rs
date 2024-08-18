@@ -20,10 +20,14 @@ impl Default for YesNoDialog {
     fn default() -> Self {
         let inner = InputDialog::default()
             .with_prompt(Prompt::inline(Span::styled("[y/N] > ", ORANGE)))
-            .with_validator(Validator::new("Choose yes or no", |vec| {
+            .with_validator(Validator::new(|vec| {
                 let mut string: String = vec.iter().collect();
                 string.make_ascii_lowercase();
-                "yes".starts_with(string.as_str()) || "no".starts_with(string.as_str())
+                if "yes".starts_with(string.as_str()) || "no".starts_with(string.as_str()) {
+                    None
+                } else {
+                    Some("Choose yes or no".into())
+                }
             }))
             .with_completions(vec!["yes".into(), "no".into()]);
         YesNoDialog { inner }

@@ -16,7 +16,10 @@ impl<'p, 'c> Widget for &mut InputDialog<'p, 'c> {
 
         let (header_area, input_area, validation_area) = {
             let header_height = if header_prompt.spans.is_empty() { 0 } else { 1 };
-            let validation_height = validation_message.map(|m| m.lines().count()).unwrap_or(0);
+            let validation_height = validation_message
+                .as_ref()
+                .map(|m| m.lines().count())
+                .unwrap_or(0);
             let rects = Layout::vertical(vec![
                 Constraint::Length(header_height),
                 Constraint::Length(1),
@@ -32,7 +35,7 @@ impl<'p, 'c> Widget for &mut InputDialog<'p, 'c> {
         self.render_input(buf, inline_prompt, input_area);
 
         if let Some(message) = validation_message {
-            Paragraph::new(Line::styled(message, Style::from(Color::LightRed)))
+            Paragraph::new(Line::styled(message.as_ref(), Style::from(Color::LightRed)))
                 .render(validation_area, buf);
         }
     }
