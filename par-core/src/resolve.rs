@@ -3,15 +3,20 @@ use std::path;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
-pub fn get_existing_locations(base: &Path) -> anyhow::Result<Vec<String>> {
+pub struct Locations {
+    pub files: Vec<String>,
+    pub dirs: Vec<String>,
+}
+
+pub fn get_existing_locations(base: &Path) -> anyhow::Result<Locations> {
     let walk_dir = WalkDir::new(base);
-    let mut ret = Vec::new();
+    let mut locations = Locations {
+        files: Vec::with_capacity(16),
+        dirs: Vec::with_capacity(16),
+    };
     for entry in walk_dir {
         let entry = entry?;
-        if !entry.path().is_file() {
-            continue;
-        }
-        let path = pathdiff::diff_paths(entry.path(), base)
+        let mut path = pathdiff::diff_paths(entry.path(), base)
             .ok_or(anyhow!("Error resolving relative path"))?
             .into_os_string()
             .into_string()
@@ -20,12 +25,20 @@ pub fn get_existing_locations(base: &Path) -> anyhow::Result<Vec<String>> {
             continue;
         }
         if cfg!(windows) {
-            ret.push(path.replace(path::MAIN_SEPARATOR, "/"));
+            path = path.replace(path::MAIN_SEPARATOR, "/")
+        }
+        if entry.path().is_dir() {
+            if !path.is_empty() {
+                let dir_path = format!("{path}/");
+                if !locations.dirs.contains(&dir_path) {
+                    locations.dirs.push(dir_path)
+                }
+            }
         } else {
-            ret.push(path);
+            locations.files.push(path)
         }
     }
-    Ok(ret)
+    Ok(locations)
 }
 
 pub fn resolve_existing_location(
@@ -53,7 +66,11 @@ pub fn resolve_existing_location(
         };
     }
     let existing = get_existing_locations(base)?;
-    let candidates: Vec<_> = existing.iter().filter(|&s| s.starts_with(key)).collect();
+    let candidates: Vec<_> = existing
+        .files
+        .iter()
+        .filter(|&s| s.starts_with(key))
+        .collect();
     if candidates.len() == 1 {
         return Ok(base.join(candidates[0]));
     }

@@ -23,8 +23,9 @@ fn test_get_all() -> anyhow::Result<()> {
     let existing = par_core::get_existing_locations(test_store.path())?;
     assert_eq!(
         vec!["dir1/file1", "dir1/file2", "dir2/pass", "file1", "file2"],
-        existing
+        existing.files
     );
+    assert_eq!(vec!["dir1/", "dir2/"], existing.dirs);
     Ok(())
 }
 

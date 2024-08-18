@@ -13,6 +13,7 @@ use std::path::Path;
 
 pub fn select_existing_key(store: &Path) -> anyhow::Result<String> {
     let vec = get_existing_locations(store)?
+        .files
         .into_iter()
         .map(Cow::Owned)
         .collect();
@@ -52,10 +53,11 @@ fn match_confirmation() -> Confirmation<'static> {
 
 pub fn read_new_key_interactive(prompt: &'static str, store: &Path) -> anyhow::Result<String> {
     let existing = get_existing_locations(store)?;
-    let predicate = move |vec: &Vec<char>| !existing.contains(&vec.iter().collect());
+    let predicate = move |vec: &Vec<char>| !existing.files.contains(&vec.iter().collect());
     let new_key = InputDialog::default()
         .with_prompt(Prompt::inline(prompt))
         .with_validator(Validator::new("Key already exists", predicate))
+        .with_completions(existing.dirs.into_iter().map(Cow::Owned).collect())
         .with_theme(DIALOG_THEME.deref())
         .run()?;
     Ok(new_key)
