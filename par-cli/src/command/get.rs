@@ -43,10 +43,10 @@ pub fn run(store: PathBuf, args: GetArgs) -> anyhow::Result<()> {
         .and_then(|key| resolve_existing_location(&store, &key, false))?;
     let decrypted = Backend::decrypt(location)?;
     if args.clipboard {
+        clear_clipboard::clear_in_new_process(decrypted.as_str(), args.clear_clipboard_delay)?;
         ClipboardContext::new()
             .and_then(|mut ctx| ctx.set_contents(decrypted))
             .map_err(|_| anyhow!("Could not access Clipboard"))?;
-        clear_clipboard::clear_in_new_process(args.clear_clipboard_delay)?;
     } else {
         print!("{decrypted}");
         if io::stdout().is_terminal() {

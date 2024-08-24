@@ -49,13 +49,13 @@ fn output(store: &Path, args: GenerateArgs, pass: String) -> anyhow::Result<()> 
                 git::add(store, key)?;
             }
             copy_to_clipboard(pass)?;
-            clear_clipboard::clear_in_new_process(10)?;
         }
     }
     Ok(())
 }
 
 fn copy_to_clipboard(pass: String) -> anyhow::Result<()> {
+    clear_clipboard::clear_in_new_process(pass.as_str(), 10)?;
     ClipboardContext::new()
         .and_then(|mut ctx| ctx.set_contents(pass))
         .map_err(|_| anyhow!("Could not access clipboard"))?;
