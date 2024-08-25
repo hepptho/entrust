@@ -33,7 +33,7 @@ pub struct InputDialog<'p, 'c> {
     prompt: Prompt<'p>,
     placeholder: &'static str,
     timeout: Option<Duration>,
-    validator: Validator,
+    validator: Validator<'static>,
     confirmation: Option<Confirmation<'c>>,
     state: DialogState,
     theme: Cow<'static, Theme>,
@@ -67,7 +67,7 @@ impl<'p, 'c> InputDialog<'p, 'c> {
         self.mask = mask;
         self
     }
-    pub fn with_validator(mut self, validator: Validator) -> Self {
+    pub fn with_validator(mut self, validator: Validator<'static>) -> Self {
         self.validator = validator;
         self
     }

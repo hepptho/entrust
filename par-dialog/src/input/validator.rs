@@ -3,46 +3,49 @@ use std::borrow::Cow;
 use std::fmt::{Debug, Formatter};
 use std::ops::Add;
 
-pub trait ValidatorFn<'m>: 'static + Fn(&[char]) -> Option<Cow<'m, str>> {}
-impl<'m, P: 'static + Fn(&[char]) -> Option<Cow<'m, str>>> ValidatorFn<'m> for P {}
+pub trait ValidatorFn<'f>: 'f + Fn(&[char]) -> Option<Cow<'f, str>> {}
+impl<'f, F> ValidatorFn<'f> for F where F: 'f + Fn(&[char]) -> Option<Cow<'f, str>> {}
 
-pub struct Validator {
-    function: Box<dyn ValidatorFn<'static>>,
+pub struct Validator<'f> {
+    function: Box<dyn ValidatorFn<'f>>,
 }
 
-impl Validator {
-    pub fn new(function: impl ValidatorFn<'static>) -> Self {
+impl<'f> Validator<'f> {
+    pub fn new(function: impl ValidatorFn<'f>) -> Self {
         Validator {
             function: Box::new(function),
         }
     }
 }
 
-impl<F: ValidatorFn<'static>> From<F> for Validator {
+impl<'f, F> From<F> for Validator<'f>
+where
+    F: ValidatorFn<'f>,
+{
     fn from(value: F) -> Self {
         Validator::new(value)
     }
 }
 
-impl Default for Validator {
+impl Default for Validator<'_> {
     fn default() -> Self {
         Validator::new(|_| None)
     }
 }
 
-impl Validator {
-    pub fn not_empty(message: &'static str) -> Self {
+impl<'f> Validator<'f> {
+    pub fn not_empty(message: &'f str) -> Self {
         Validator::new(validate_not_empty(message))
     }
-    pub fn filename() -> Self {
+    pub fn filename() -> Validator<'static> {
         Validator::new(validate_filename())
     }
 }
 
-pub fn validate_not_empty(message: &'static str) -> impl ValidatorFn<'static> {
+pub fn validate_not_empty(message: &str) -> impl ValidatorFn {
     move |vec| {
         if vec.is_empty() {
-            Some(message.into())
+            Some(Cow::Borrowed(message))
         } else {
             None
         }
@@ -67,8 +70,8 @@ pub fn validate_filename() -> impl ValidatorFn<'static> {
     }
 }
 
-impl Add for Validator {
-    type Output = Validator;
+impl<'f> Add for Validator<'f> {
+    type Output = Validator<'f>;
 
     fn add(self, rhs: Self) -> Self::Output {
         let combined = move |chars: &[char]| (self.function)(chars).or((rhs.function)(chars));
@@ -82,7 +85,7 @@ impl<'p, 'c> InputDialog<'p, 'c> {
     }
 }
 
-impl Debug for Validator {
+impl Debug for Validator<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "Validator")
     }
