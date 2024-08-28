@@ -11,6 +11,7 @@ use std::io;
 use std::time::Duration;
 
 use crate::dialog::{Dialog, DialogState};
+use crate::input::completions::Completions;
 use crate::input::confirmation::Confirmation;
 use crate::input::cursor::{Cursor, CursorMode};
 use crate::input::mask::InputMask;
@@ -28,7 +29,7 @@ use tracing::debug;
 pub struct InputDialog<'p, 'c> {
     content: Vec<char>,
     cursor: Cursor,
-    completions: Vec<Cow<'static, str>>,
+    completions: Completions,
     mask: InputMask,
     prompt: Prompt<'p>,
     placeholder: &'static str,
@@ -80,7 +81,8 @@ impl<'p, 'c> InputDialog<'p, 'c> {
         self
     }
     pub fn with_completions(mut self, completions: Vec<Cow<'static, str>>) -> Self {
-        self.completions = completions;
+        self.completions.list = completions;
+        self.completions.list.sort();
         self
     }
 
@@ -89,7 +91,7 @@ impl<'p, 'c> InputDialog<'p, 'c> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Update {
     InsertChar(char),
     DeleteBeforeCursor,
@@ -99,6 +101,8 @@ pub enum Update {
     ToggleMask,
     Confirm,
     Cancel,
+    CycleCompletions,
+    CycleCompletionsBackward,
 }
 
 impl<'p, 'c> Dialog for InputDialog<'p, 'c> {
@@ -116,6 +120,10 @@ impl<'p, 'c> Dialog for InputDialog<'p, 'c> {
                 kep!(KeyCode::Left) => Update::MoveCursorLeft.into(),
                 kep!(KeyCode::Right) => Update::MoveCursorRight.into(),
                 kep!(KeyCode::Enter) => Update::Confirm.into(),
+                kep!(KeyCode::Tab, KeyModifiers::SHIFT) | kep!(KeyCode::Up) => {
+                    Update::CycleCompletionsBackward.into()
+                }
+                kep!(KeyCode::Tab) | kep!(KeyCode::Down) => Update::CycleCompletions.into(),
                 _ => None,
             },
             _ => None,
@@ -160,6 +168,9 @@ impl<'p, 'c> Dialog for InputDialog<'p, 'c> {
                 }
             }
             Update::Cancel => self.state = DialogState::Cancelled,
+            Update::CycleCompletions | Update::CycleCompletionsBackward => {
+                self.update_completions(update)
+            }
         };
         Ok(())
     }
