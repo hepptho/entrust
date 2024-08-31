@@ -14,6 +14,16 @@ pub fn run() -> anyhow::Result<()> {
     loop {
         let input = InputDialog::default()
             .with_prompt(Prompt::inline(chevron_prompt!("par")))
+            .with_completions(vec![
+                "add".into(),
+                "copy".into(),
+                "get".into(),
+                "edit".into(),
+                "move".into(),
+                "remove".into(),
+                "generate".into(),
+                "tree".into(),
+            ])
             .run()?;
         if input.is_empty() {
             continue;
