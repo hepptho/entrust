@@ -1,7 +1,7 @@
 use crate::theme::{chevron_prompt, DIALOG_THEME};
 use par_core::get_existing_locations;
 use par_dialog::dialog::Dialog;
-use par_dialog::input::confirmation::{Confirmation, ConfirmationMessageType};
+use par_dialog::input::confirmation::Confirmation;
 use par_dialog::input::mask::InputMask;
 use par_dialog::input::prompt::Prompt;
 use par_dialog::input::validator::{validate_filename, Validator};
@@ -44,11 +44,8 @@ pub fn read_password_interactive(initial: &str) -> anyhow::Result<String> {
 }
 
 fn match_confirmation() -> Confirmation<'static> {
-    Confirmation::new(
-        chevron_prompt!("Confirm password  "),
-        chevron_prompt!("The entered passwords do not match"),
-        ConfirmationMessageType::Inline,
-    )
+    Confirmation::new(Prompt::inline(chevron_prompt!("Confirm password  ")))
+        .with_validation_message("The entered passwords do not match.")
 }
 
 pub fn read_new_key_interactive(prompt: &'static str, store: &Path) -> anyhow::Result<String> {

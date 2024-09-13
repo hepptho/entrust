@@ -1,90 +1,64 @@
 use crate::dialog::DialogState;
+use crate::input::prompt::Prompt;
+use crate::input::validator::Validator;
 use crate::input::InputDialog;
-use ratatui::text::Line;
 use std::mem;
 
 #[derive(Debug, Clone)]
 pub struct Confirmation<'c> {
-    initial_message: Line<'c>,
-    incorrect_message: Line<'c>,
-    pub(super) message_type: ConfirmationMessageType,
-    pub(super) answered_incorrectly: bool,
-    pub(super) first_input: Option<Vec<char>>,
+    prompt: Prompt<'c>,
+    validation_message: &'static str,
+    is_active: bool,
 }
 
 impl<'c> Confirmation<'c> {
-    pub fn new<M, I>(
-        initial_message: M,
-        incorrect_message: I,
-        message_type: ConfirmationMessageType,
-    ) -> Self
-    where
-        M: Into<Line<'c>>,
-        I: Into<Line<'c>>,
-    {
+    pub fn new(prompt: Prompt<'c>) -> Self {
         Confirmation {
-            initial_message: initial_message.into(),
-            incorrect_message: incorrect_message.into(),
-            message_type,
-            answered_incorrectly: false,
-            first_input: None,
+            prompt,
+            validation_message: "no match",
+            is_active: false,
         }
     }
 
-    pub(super) fn message(&self) -> &Line {
-        if self.answered_incorrectly {
-            &self.incorrect_message
-        } else {
-            &self.initial_message
-        }
-    }
-
-    pub(super) fn confirm(dialog: &mut InputDialog) {
-        if let Some(confirmation) = &dialog.confirmation {
-            if let Some(first_input) = &confirmation.first_input {
-                if first_input == &dialog.content {
-                    dialog.state = DialogState::Completed
-                } else {
-                    dialog.confirmation.as_mut().unwrap().answered_incorrectly = true
-                }
-            } else {
-                dialog.confirmation.as_mut().unwrap().first_input =
-                    Some(mem::take(&mut dialog.content));
-                dialog.cursor.set_index(0)
-            }
-        } else {
-            dialog.state = DialogState::Completed
-        }
+    pub fn with_validation_message(mut self, validation_message: &'static str) -> Self {
+        self.validation_message = validation_message;
+        self
     }
 }
 
 impl<'p, 'c> InputDialog<'p, 'c> {
-    pub(super) fn prompt_with_confirmation(&self) -> (Line, Line) {
+    pub(super) fn confirm(&mut self) {
+        match self.confirmation.as_mut() {
+            None => self.state = DialogState::Completed,
+            Some(confirmation) if confirmation.is_active => self.state = DialogState::Completed,
+            Some(confirmation) => {
+                let first = mem::take(&mut self.content);
+                self.cursor.set_index(0);
+                let message = confirmation.validation_message;
+                self.validator = Validator::new(move |chars| {
+                    if chars == first {
+                        None
+                    } else {
+                        Some(message.into())
+                    }
+                });
+                confirmation.is_active = true;
+            }
+        }
+    }
+
+    pub(super) fn prompt_with_confirmation(&self) -> Prompt {
         self.confirmation
             .as_ref()
             .and_then(|c| {
-                if c.first_input.is_some() {
-                    Some(c)
+                if c.is_active {
+                    Some(c.prompt.clone())
                 } else {
                     None
                 }
             })
-            .map(|c| match c.message_type {
-                ConfirmationMessageType::Header => {
-                    (c.message().clone(), self.prompt.inline.clone())
-                }
-                ConfirmationMessageType::Inline => {
-                    (self.prompt.header.clone(), c.message().clone())
-                }
-            })
-            .unwrap_or((self.prompt.header.clone(), self.prompt.inline.clone()))
+            .unwrap_or(self.prompt.clone())
     }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum ConfirmationMessageType {
-    Header,
-    Inline,
 }
 
 #[cfg(test)]
@@ -93,51 +67,44 @@ mod tests {
     use crate::dialog::Dialog;
     use crate::input::prompt::Prompt;
     use crate::input::Update;
+    use ratatui::prelude::Line;
 
     #[test]
     fn test() {
         let prompt_header = "header prompt";
         let prompt_inline = "inline prompt";
-        let confirmation_message = "repeat";
-        let incorrect_message = "no match";
+        let confirmation_header = "repeat";
+        let validation_message = "no match";
         let mut dialog = InputDialog::default()
             .with_prompt(Prompt::new(prompt_header, prompt_inline))
-            .with_confirmation(Confirmation::new(
-                confirmation_message,
-                incorrect_message,
-                ConfirmationMessageType::Header,
-            ));
+            .with_confirmation(
+                Confirmation::new(Prompt::header(confirmation_header))
+                    .with_validation_message(validation_message),
+            );
 
         dialog.perform_update(Update::InsertChar('a')).unwrap();
-        assert_eq!(None, dialog.confirmation.as_ref().unwrap().first_input);
+        assert!(!dialog.confirmation.as_ref().unwrap().is_active);
         assert_eq!(
             Line::raw(prompt_header),
-            dialog.prompt_with_confirmation().0
+            dialog.prompt_with_confirmation().header
         );
 
         dialog.perform_update(Update::Confirm).unwrap();
-        assert_eq!(
-            Some(vec!['a']),
-            dialog.confirmation.as_ref().unwrap().first_input
-        );
         assert!(dialog.content.is_empty());
-        assert!(!dialog.confirmation.as_ref().unwrap().answered_incorrectly);
+        assert!(dialog.confirmation.as_ref().unwrap().is_active);
         assert_eq!(
-            Line::raw(confirmation_message),
-            dialog.prompt_with_confirmation().0
+            Line::raw(confirmation_header),
+            dialog.prompt_with_confirmation().header
         );
 
         dialog.perform_update(Update::InsertChar('b')).unwrap();
         dialog.perform_update(Update::Confirm).unwrap();
-        assert!(dialog.confirmation.as_ref().unwrap().answered_incorrectly);
-        assert_eq!(
-            Line::raw(incorrect_message),
-            dialog.prompt_with_confirmation().0
-        );
+        assert_eq!(Some(validation_message.into()), dialog.validation_message());
         assert_eq!(DialogState::Pending, dialog.state);
 
         dialog.perform_update(Update::DeleteBeforeCursor).unwrap();
         dialog.perform_update(Update::InsertChar('a')).unwrap();
+        assert_eq!(None, dialog.validation_message());
         dialog.perform_update(Update::Confirm).unwrap();
         assert_eq!(DialogState::Completed, dialog.state);
     }

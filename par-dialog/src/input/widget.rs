@@ -10,12 +10,12 @@ impl<'p, 'c> Widget for &mut InputDialog<'p, 'c> {
     where
         Self: Sized,
     {
-        let (header_prompt, inline_prompt) = self.prompt_with_confirmation();
+        let prompt = self.prompt_with_confirmation();
 
         let validation_message = self.validation_message();
 
         let (header_area, input_area, validation_area) = {
-            let header_height = if header_prompt.spans.is_empty() { 0 } else { 1 };
+            let header_height = if prompt.header.spans.is_empty() { 0 } else { 1 };
             let validation_height = validation_message
                 .as_ref()
                 .map(|m| m.lines().count())
@@ -29,10 +29,10 @@ impl<'p, 'c> Widget for &mut InputDialog<'p, 'c> {
             (rects[0], rects[1], rects[2])
         };
 
-        let header_prompt = header_prompt.patch_style(self.theme.header_style);
+        let header_prompt = prompt.header.patch_style(self.theme.header_style);
         Paragraph::new(header_prompt).render(header_area, buf);
 
-        let input_spans = self.input_spans(inline_prompt);
+        let input_spans = self.input_spans(prompt.inline);
         Paragraph::new(Line::from(input_spans)).render(input_area, buf);
 
         if let Some(message) = validation_message {
@@ -128,7 +128,7 @@ mod tests {
         let dialog = InputDialog::default()
             .with_content("content")
             .with_prompt(Prompt::inline("inline".bold()));
-        let spans = dialog.input_spans(dialog.prompt_with_confirmation().1);
+        let spans = dialog.input_spans(dialog.prompt_with_confirmation().inline);
         assert_eq!(4, spans.len());
         let inline_prompt_style = Theme::default().prompt_style.patch(Style::new().bold());
         assert_eq!(inline_prompt_style, spans[0].style);
@@ -141,7 +141,7 @@ mod tests {
     #[test]
     fn test_input_line_placeholder() {
         let dialog = InputDialog::default().with_placeholder("placeholder");
-        let spans = dialog.input_spans(dialog.prompt_with_confirmation().1);
+        let spans = dialog.input_spans(dialog.prompt_with_confirmation().inline);
         assert_eq!(1, spans.len());
         assert_eq!(Theme::default().placeholder_style, spans[0].style);
         assert_eq!("placeholder", spans[0].content);
@@ -151,14 +151,14 @@ mod tests {
     fn test_input_line_cursor() {
         let mut dialog = InputDialog::default();
         {
-            let spans = dialog.input_spans(dialog.prompt_with_confirmation().1);
+            let spans = dialog.input_spans(dialog.prompt_with_confirmation().inline);
             assert_eq!(1, spans.len());
             assert_eq!(Theme::default().cursor_on_style, spans[0].style);
             assert_eq!(" ", spans[0].content);
         }
         dialog.tick();
         {
-            let spans = dialog.input_spans(dialog.prompt_with_confirmation().1);
+            let spans = dialog.input_spans(dialog.prompt_with_confirmation().inline);
             assert_eq!(1, spans.len());
             assert_eq!(Theme::default().cursor_off_style, spans[0].style);
             assert_eq!(" ", spans[0].content);
@@ -173,7 +173,7 @@ mod tests {
             .with_completions(vec![
                 "So it is, and so it will be, for so it has been, time out of mind".into(),
             ]);
-        let spans = dialog.input_spans(dialog.prompt_with_confirmation().1);
+        let spans = dialog.input_spans(dialog.prompt_with_confirmation().inline);
         assert_eq!(4, spans.len());
         // before cursor
         assert_eq!(Style::default(), spans[0].style);

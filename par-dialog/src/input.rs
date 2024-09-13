@@ -164,7 +164,7 @@ impl<'p, 'c> Dialog for InputDialog<'p, 'c> {
             Update::ToggleMask => self.mask.toggle(),
             Update::Confirm => {
                 if self.validation_message().is_none() {
-                    Confirmation::confirm(self)
+                    self.confirm()
                 }
             }
             Update::Cancel => self.state = DialogState::Cancelled,
