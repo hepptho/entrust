@@ -16,6 +16,42 @@ impl<'f> Validator<'f> {
             function: Box::new(function),
         }
     }
+    pub fn not_empty(message: &'f str) -> Self {
+        Validator::new(validate_not_empty(message))
+    }
+    pub fn filename() -> Validator<'static> {
+        Validator::new(validate_filename())
+    }
+}
+
+pub fn validate_not_empty(message: &str) -> impl ValidatorFn {
+    |chars| {
+        if chars.is_empty() {
+            Some(Cow::Borrowed(message))
+        } else {
+            None
+        }
+    }
+}
+
+pub fn validate_filename() -> impl ValidatorFn<'static> {
+    const WINDOWS_ILLEGAL_CHARS: &str = r#":*?"<>|"#;
+    |chars| {
+        if chars.is_empty() {
+            return Some("Filename must not be empty".into());
+        } else if chars.last() == Some(&'/') {
+            return Some("Filename must not end with '/'".into());
+        }
+        if cfg!(windows) {
+            let contains_invalid = chars
+                .iter()
+                .any(|char| WINDOWS_ILLEGAL_CHARS.contains(*char));
+            if contains_invalid {
+                return Some(format!("Filename must not contain any of the following characters: {WINDOWS_ILLEGAL_CHARS}").into());
+            }
+        }
+        None
+    }
 }
 
 impl<'f, F> From<F> for Validator<'f>
@@ -30,43 +66,6 @@ where
 impl Default for Validator<'_> {
     fn default() -> Self {
         Validator::new(|_| None)
-    }
-}
-
-impl<'f> Validator<'f> {
-    pub fn not_empty(message: &'f str) -> Self {
-        Validator::new(validate_not_empty(message))
-    }
-    pub fn filename() -> Validator<'static> {
-        Validator::new(validate_filename())
-    }
-}
-
-pub fn validate_not_empty(message: &str) -> impl ValidatorFn {
-    move |vec| {
-        if vec.is_empty() {
-            Some(Cow::Borrowed(message))
-        } else {
-            None
-        }
-    }
-}
-
-pub fn validate_filename() -> impl ValidatorFn<'static> {
-    const WINDOWS_ILLEGAL_CHARS: &str = r#":*?"<>|"#;
-    |vec| {
-        if vec.is_empty() {
-            return Some("Filename must not be empty".into());
-        } else if vec.last() == Some(&'/') {
-            return Some("Filename must not end with '/'".into());
-        }
-        if cfg!(windows) {
-            let contains_invalid = vec.iter().any(|char| WINDOWS_ILLEGAL_CHARS.contains(*char));
-            if contains_invalid {
-                return Some(format!("Filename must not contain any of the following characters: {WINDOWS_ILLEGAL_CHARS}").into());
-            }
-        }
-        None
     }
 }
 
