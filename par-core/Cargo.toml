@@ -5,7 +5,12 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+agent = ["dep:par-agent"]
+
 [dependencies]
+par-agent = { path = "../par-agent", optional = true }
+
 anyhow = "1.0"
 itertools = { workspace = true }
 pathdiff = "0.2"

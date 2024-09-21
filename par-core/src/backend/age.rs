@@ -1,4 +1,8 @@
+#[cfg(feature = "agent")]
+mod agent;
 pub mod identity;
+#[cfg(not(feature = "agent"))]
+mod no_agent;
 
 use std::io;
 use std::io::Read;

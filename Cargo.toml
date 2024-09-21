@@ -1,5 +1,5 @@
 [workspace]
-members = ["par-core", "par-cli", "par-dialog"]
+members = ["par-core", "par-cli", "par-dialog", "par-agent"]
 default-members = ["par-cli"]
 resolver = "2"
 

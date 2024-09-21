@@ -1,26 +1,24 @@
+use crate::age;
 use crate::backend::is_age_encrypted;
 use anyhow::anyhow;
 use std::io::{IsTerminal, Read};
 use std::path::Path;
 use std::process::{Command, Stdio};
-use std::sync::OnceLock;
 use std::{env, fs, io};
 
-static IDENTITY: OnceLock<anyhow::Result<Vec<u8>>> = OnceLock::new();
+#[cfg(feature = "agent")]
+pub use age::agent::get_identity;
+#[cfg(not(feature = "agent"))]
+pub use age::no_agent::get_identity;
 
-pub fn get_identity() -> anyhow::Result<&'static Vec<u8>> {
-    IDENTITY
-        .get_or_init(|| {
-            if !io::stdin().is_terminal() {
-                read_identity_from_stdin()
-            } else if let Some(identity_file) = identity_file() {
-                read_identity_from_file(identity_file)
-            } else {
-                Err(anyhow!(""))
-            }
-        })
-        .as_ref()
-        .map_err(|err| anyhow!(err))
+pub fn read_identity() -> anyhow::Result<Vec<u8>> {
+    if !io::stdin().is_terminal() {
+        read_identity_from_stdin()
+    } else if let Some(identity_file) = identity_file() {
+        read_identity_from_file(identity_file)
+    } else {
+        Err(anyhow!("AGE_IDENTITY is not set"))
+    }
 }
 
 fn read_identity_from_stdin() -> anyhow::Result<Vec<u8>> {
