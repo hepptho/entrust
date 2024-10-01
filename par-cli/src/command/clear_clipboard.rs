@@ -23,12 +23,12 @@ pub fn run(args: ClearClipboardArgs) -> anyhow::Result<()> {
     let mut stdin = String::new();
     match io::stdin().read_to_string(&mut stdin) {
         Ok(_) => {
-            if stdin.is_empty() {
-                clear_now()
-            } else if ClipboardContext::new()
-                .and_then(|mut ctx| ctx.get_contents())
-                .is_ok_and(|current| current.as_str() == stdin.trim_end())
-            {
+            let stdin_matches_current = || {
+                ClipboardContext::new()
+                    .and_then(|mut ctx| ctx.get_contents())
+                    .is_ok_and(|current| current.as_str() == stdin.trim_end())
+            };
+            if stdin.is_empty() || stdin_matches_current() {
                 clear_now()
             } else {
                 Ok(())
@@ -55,7 +55,7 @@ pub(crate) fn clear_in_new_process(content: &str, delay_seconds: u32) -> anyhow:
         .stderr(Stdio::null())
         .spawn()?;
     let mut stdin = child.stdin.take().unwrap();
-    stdin.write(content.as_bytes())?;
+    stdin.write_all(content.as_bytes())?;
     drop(stdin);
     cprintln!(
         "<bright-black>The clipboard will be cleared in {delay_seconds}s if it has not changed."
