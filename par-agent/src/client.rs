@@ -24,6 +24,10 @@ pub fn shutdown_server() -> io::Result<()> {
     send_serialized(&Request::Shutdown, con.get_mut())
 }
 
+pub fn is_server_running() -> bool {
+    get_age_identity(None).is_ok()
+}
+
 fn connect() -> io::Result<BufReader<Stream>> {
     let socket_name = if GenericNamespaced::is_supported() {
         "par-agent.sock".to_ns_name::<GenericNamespaced>()?

@@ -10,14 +10,34 @@ use interprocess::local_socket::{
     GenericNamespaced, ListenerNonblockingMode, ListenerOptions, ToNsName,
 };
 pub use request::{GetAgeIdentityResponse, Request, SetAgeIdentityResponse};
-use std::io;
 use std::io::{BufReader, Read, Write};
 use std::sync::mpsc;
+use std::sync::mpsc::channel;
+use std::time::Duration;
+use std::{io, thread};
 
 #[derive(Debug, Default)]
 struct State {
     age_identity: String,
     age_pin: Option<String>,
+}
+
+pub fn run_with_idle_timeout(timeout: Duration) -> io::Result<()> {
+    let (sender, receiver) = channel();
+
+    thread::spawn(move || run(Some(sender)));
+    receiver
+        .recv_timeout(Duration::from_secs(1))
+        .map_err(|_| io::Error::other("Server did not start"))?;
+
+    loop {
+        match receiver.recv_timeout(timeout) {
+            Ok(ServerEvent::Stopped) | Err(_) => break,
+            Ok(ServerEvent::RequestHandled) => continue,
+            Ok(_) => continue,
+        };
+    }
+    Ok(())
 }
 
 pub fn run(event_sender: Option<mpsc::Sender<ServerEvent>>) -> io::Result<()> {
