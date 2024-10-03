@@ -1,29 +1,29 @@
 use crate::age::identity::read_identity;
+use anyhow::anyhow;
+use par_agent::server::GetAgeIdentityResponse;
 use std::borrow::Cow;
 use std::io::ErrorKind;
 use std::process::{Command, Stdio};
 use std::{env, io};
 
 pub fn get_identity() -> anyhow::Result<Vec<u8>> {
-    match get_identity_from_agent() {
+    let result = par_agent::client::get_age_identity(env::var("PAR_AGENT_PIN").ok());
+    match result {
         Err(e) if e.kind() == ErrorKind::NotFound => start_agent()?,
-        Ok(id) if id.as_slice() == [b'\n'] => {}
-        Ok(id) if id.as_slice() == [b'-', b'\n'] => start_agent()?,
-        Ok(id) => return Ok(id),
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(anyhow!(e)),
+        Ok(response) => match response {
+            GetAgeIdentityResponse::Ok { identity } => return Ok(identity.into_bytes()),
+            GetAgeIdentityResponse::NotSet => start_agent()?,
+            GetAgeIdentityResponse::WrongPin => par_agent::client::shutdown_server()?,
+        },
     }
 
     let id = read_identity()?;
     par_agent::client::set_age_identity(
-        String::from_utf8(id.clone())?.as_str(),
+        String::from_utf8(id.clone())?,
         env::var("PAR_AGENT_PIN").ok(),
     )?;
     Ok(id)
-}
-
-fn get_identity_from_agent() -> io::Result<Vec<u8>> {
-    let string = par_agent::client::get_age_identity(env::var("PAR_AGENT_PIN").ok())?;
-    Ok(string.into_bytes())
 }
 
 fn start_agent() -> io::Result<()> {

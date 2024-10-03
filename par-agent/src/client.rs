@@ -1,36 +1,27 @@
+use crate::server::{GetAgeIdentityResponse, Request};
+use crate::{read_deserialized, send_serialized};
 use interprocess::local_socket::prelude::*;
 use interprocess::local_socket::{GenericFilePath, GenericNamespaced, Stream};
 use std::io;
-use std::io::{BufRead, BufReader, Write};
+use std::io::BufReader;
 
-pub fn set_age_identity<P: AsRef<str>>(identity: &str, pin: Option<P>) -> io::Result<()> {
-    let identity = identity
-        .lines()
-        .find(|&l| !l.starts_with('#'))
-        .ok_or(io::Error::other("Invalid age identity"))?;
-    let message = format!(
-        "set age\n{identity}\n{}\n",
-        pin.as_ref().map(|p| p.as_ref()).unwrap_or("-")
-    );
+pub fn set_age_identity(identity: String, pin: Option<String>) -> io::Result<()> {
+    let request = Request::SetAgeIdentity { identity, pin };
     let mut con = connect()?;
-    con.get_mut().write_all(message.as_bytes())
+    send_serialized(&request, con.get_mut())
 }
 
-pub fn get_age_identity<P: AsRef<str>>(pin: Option<P>) -> io::Result<String> {
-    let message = format!(
-        "get age\n{}\n",
-        pin.as_ref().map(|p| p.as_ref()).unwrap_or("-")
-    );
+pub fn get_age_identity(pin: Option<String>) -> io::Result<GetAgeIdentityResponse> {
+    let request = Request::GetAgeIdentity { pin };
     let mut con = connect()?;
-    con.get_mut().write_all(message.as_bytes())?;
-    let mut buffer = String::with_capacity(128);
-    con.read_line(&mut buffer)?;
-    Ok(buffer)
+    send_serialized(&request, con.get_mut())?;
+    let response: GetAgeIdentityResponse = read_deserialized(&mut con)?;
+    Ok(response)
 }
 
 pub fn shutdown_server() -> io::Result<()> {
     let mut con = connect()?;
-    con.get_mut().write_all(b"shutdown\n")
+    send_serialized(&Request::Shutdown, con.get_mut())
 }
 
 fn connect() -> io::Result<BufReader<Stream>> {

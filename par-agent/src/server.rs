@@ -1,20 +1,23 @@
 mod event;
+mod request;
 
+use crate::server::event::EventSender;
+use crate::server::HandleResult::{Break, Continue};
+use crate::{read_deserialized, send_serialized};
+pub use event::ServerEvent;
 use interprocess::local_socket::traits::ListenerExt;
 use interprocess::local_socket::{
     GenericNamespaced, ListenerNonblockingMode, ListenerOptions, ToNsName,
 };
+pub use request::{GetAgeIdentityResponse, Request, SetAgeIdentityResponse};
 use std::io;
-use std::io::{BufRead, BufReader, Read, Write};
+use std::io::{BufReader, Read, Write};
 use std::sync::mpsc;
-
-use crate::server::event::EventSender;
-pub use event::ServerEvent;
 
 #[derive(Debug, Default)]
 struct State {
     age_identity: String,
-    age_password: String,
+    age_pin: Option<String>,
 }
 
 pub fn run(event_sender: Option<mpsc::Sender<ServerEvent>>) -> io::Result<()> {
@@ -27,20 +30,17 @@ pub fn run(event_sender: Option<mpsc::Sender<ServerEvent>>) -> io::Result<()> {
         .nonblocking(ListenerNonblockingMode::Neither);
     let listener = options.create_sync()?;
 
-    let mut buffer = String::with_capacity(128);
     event_sender.send_server_event(ServerEvent::Started)?;
     for result in listener.incoming() {
         let mut con = BufReader::new(result?);
 
-        con.read_line(&mut buffer)?;
+        let request: Request = read_deserialized(&mut con)?;
 
-        let handle_result = handle_request(buffer.as_str(), &mut state, &mut con)?;
+        let handle_result = handle_request(request, &mut state, &mut con)?;
         event_sender.send_server_event(ServerEvent::RequestHandled)?;
-        if let HandleResult::Break = handle_result {
+        if let Break = handle_result {
             break;
         }
-
-        buffer.clear();
     }
     event_sender.send_server_event(ServerEvent::Stopped)?;
     Ok(())
@@ -53,33 +53,35 @@ enum HandleResult {
 }
 
 fn handle_request<R: Read + Write>(
-    request: &str,
+    request: Request,
     state: &mut State,
     con: &mut BufReader<R>,
 ) -> io::Result<HandleResult> {
     match request {
-        "set age\n" => {
-            state.age_identity.clear();
-            con.read_line(&mut state.age_identity)?;
-            state.age_password.clear();
-            con.read_line(&mut state.age_password)?;
+        Request::SetAgeIdentity { identity, pin } => {
+            state.age_identity = identity;
+            state.age_pin = pin;
+            Ok(Continue)
         }
-        "get age\n" => {
-            let mut supplied_password = String::new();
-            con.read_line(&mut supplied_password)?;
-            if state.age_identity.is_empty() {
-                con.get_mut().write_all(b"\n")?;
-            } else if supplied_password == state.age_password {
-                con.get_mut().write_all(state.age_identity.as_bytes())?;
+        Request::GetAgeIdentity { pin } => {
+            let response = if state.age_identity.is_empty() {
+                GetAgeIdentityResponse::NotSet
+            } else if pin == state.age_pin {
+                GetAgeIdentityResponse::Ok {
+                    identity: state.age_identity.clone(),
+                }
             } else {
-                con.get_mut().write_all(b"-\n")?;
-                return Ok(HandleResult::Break);
+                GetAgeIdentityResponse::WrongPin
+            };
+            send_serialized(&response, con.get_mut())?;
+            if let GetAgeIdentityResponse::WrongPin = response {
+                Ok(Break)
+            } else {
+                Ok(Continue)
             }
         }
-        "shutdown\n" => return Ok(HandleResult::Break),
-        _ => {}
+        Request::Shutdown => Ok(Break),
     }
-    Ok(HandleResult::Continue)
 }
 
 #[cfg(test)]
@@ -88,63 +90,94 @@ mod tests {
     use std::io::Cursor;
 
     #[test]
+    fn test_serialization() {
+        let req = Request::SetAgeIdentity {
+            identity: "id".to_string(),
+            pin: Some("pin".to_string()),
+        };
+        let mut con = BufReader::new(Cursor::new(Vec::new()));
+        send_serialized(&req, con.get_mut()).unwrap();
+        con.get_mut().set_position(0);
+        let deserialized = read_deserialized(con.get_mut()).unwrap();
+        assert_eq!(req, deserialized);
+    }
+
+    #[test]
     fn test_handle_get_age_empty() {
         let mut state = State::default();
         let mut con: BufReader<_> = BufReader::new(Cursor::new(Vec::new()));
-        let result = handle_request("get age\n", &mut state, &mut con).unwrap();
-        assert_eq!(HandleResult::Continue, result);
+        let result =
+            handle_request(Request::GetAgeIdentity { pin: None }, &mut state, &mut con).unwrap();
+        assert_eq!(Continue, result);
         con.get_mut().set_position(0);
-        let mut response = String::new();
-        con.read_line(&mut response).unwrap();
-        assert_eq!("\n", response.as_str())
+        let response: GetAgeIdentityResponse = read_deserialized(con.get_mut()).unwrap();
+        assert_eq!(GetAgeIdentityResponse::NotSet, response);
     }
 
     #[test]
     fn test_handle_get_age() {
         let mut state = State {
-            age_identity: "id\n".to_string(),
+            age_identity: "id".to_string(),
             ..Default::default()
         };
         let mut con: BufReader<_> = BufReader::new(Cursor::new(Vec::new()));
-        let result = handle_request("get age\n", &mut state, &mut con).unwrap();
-        assert_eq!(HandleResult::Continue, result);
+        let result =
+            handle_request(Request::GetAgeIdentity { pin: None }, &mut state, &mut con).unwrap();
+        assert_eq!(Continue, result);
         con.get_mut().set_position(0);
-        let mut response = String::new();
-        con.read_to_string(&mut response).unwrap();
-        assert_eq!("id\n", response.as_str())
+        let response: GetAgeIdentityResponse = read_deserialized(con.get_mut()).unwrap();
+        assert_eq!(
+            GetAgeIdentityResponse::Ok {
+                identity: "id".to_string()
+            },
+            response
+        );
     }
 
     #[test]
     fn test_handle_get_age_password() {
         let mut state = State {
-            age_identity: "id\n".to_string(),
-            age_password: "pass\n".to_string(),
+            age_identity: "id".to_string(),
+            age_pin: Some("pass".to_string()),
         };
         let mut con: BufReader<_> = BufReader::new(Cursor::new(Vec::new()));
-        con.get_mut().write_all(b"pass\n").unwrap();
+        let result = handle_request(
+            Request::GetAgeIdentity {
+                pin: Some("pass".to_string()),
+            },
+            &mut state,
+            &mut con,
+        )
+        .unwrap();
+        assert_eq!(Continue, result);
         con.get_mut().set_position(0);
-        let result = handle_request("get age\n", &mut state, &mut con).unwrap();
-        assert_eq!(HandleResult::Continue, result);
-        con.get_mut().set_position(5);
-        let mut response = String::new();
-        con.read_to_string(&mut response).unwrap();
-        assert_eq!("id\n", response.as_str())
+        let response: GetAgeIdentityResponse = read_deserialized(con.get_mut()).unwrap();
+        assert_eq!(
+            GetAgeIdentityResponse::Ok {
+                identity: "id".to_string()
+            },
+            response
+        );
     }
 
     #[test]
     fn test_handle_get_age_wrong_password() {
         let mut state = State {
-            age_identity: "id\n".to_string(),
-            age_password: "pass\n".to_string(),
+            age_identity: "id".to_string(),
+            age_pin: Some("pass".to_string()),
         };
         let mut con: BufReader<_> = BufReader::new(Cursor::new(Vec::new()));
-        con.get_mut().write_all(b"wrong pass\n").unwrap();
+        let result = handle_request(
+            Request::GetAgeIdentity {
+                pin: Some("wrong pass".to_string()),
+            },
+            &mut state,
+            &mut con,
+        )
+        .unwrap();
+        assert_eq!(Break, result);
         con.get_mut().set_position(0);
-        let result = handle_request("get age\n", &mut state, &mut con).unwrap();
-        assert_eq!(HandleResult::Break, result);
-        con.get_mut().set_position(11);
-        let mut response = String::new();
-        con.read_to_string(&mut response).unwrap();
-        assert_eq!("-\n", response.as_str())
+        let response: GetAgeIdentityResponse = read_deserialized(con.get_mut()).unwrap();
+        assert_eq!(GetAgeIdentityResponse::WrongPin, response)
     }
 }
