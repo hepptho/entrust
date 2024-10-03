@@ -35,9 +35,95 @@ pub fn run(store: PathBuf, args: RemoveArgs) -> anyhow::Result<()> {
     };
     git::remove(&store, key)?;
     if let Some(parent) = location.parent() {
-        if parent.exists() && parent.read_dir().iter().next().is_none() {
+        if parent.exists() && parent.read_dir()?.next().is_none() {
             fs::remove_dir(parent)?;
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs::File;
+    use std::io;
+    use tempfile::TempDir;
+
+    fn setup() -> io::Result<TempDir> {
+        let dir = tempfile::tempdir()?;
+        fs::create_dir(dir.path().join("subdir"))?;
+        File::create(dir.path().join("subdir/file1"))?;
+        File::create(dir.path().join("subdir/file2"))?;
+        Ok(dir)
+    }
+
+    #[test]
+    fn test_remove_non_recursive() {
+        let dir = setup().unwrap();
+
+        let result_file = run(
+            dir.path().to_path_buf(),
+            RemoveArgs {
+                key: Some("subdir/file1".to_string()),
+                recurse: false,
+            },
+        );
+        assert!(result_file.is_ok());
+
+        let result_dir = run(
+            dir.path().to_path_buf(),
+            RemoveArgs {
+                key: Some("subdir".to_string()),
+                recurse: false,
+            },
+        );
+        assert!(result_dir.is_err_and(|e| e.to_string().contains("is a directory")));
+    }
+
+    #[test]
+    fn test_remove_recursive() {
+        let dir = setup().unwrap();
+
+        let result_file = run(
+            dir.path().to_path_buf(),
+            RemoveArgs {
+                key: Some("subdir/file1".to_string()),
+                recurse: true,
+            },
+        );
+        assert!(result_file.is_ok());
+
+        let result_dir = run(
+            dir.path().to_path_buf(),
+            RemoveArgs {
+                key: Some("subdir".to_string()),
+                recurse: true,
+            },
+        );
+        assert!(result_dir.is_ok());
+    }
+
+    #[test]
+    fn test_cleanup_empty_dir() {
+        let dir = setup().unwrap();
+
+        let result_file = run(
+            dir.path().to_path_buf(),
+            RemoveArgs {
+                key: Some("subdir/file1".to_string()),
+                recurse: false,
+            },
+        );
+        assert!(result_file.is_ok());
+        let result_file = run(
+            dir.path().to_path_buf(),
+            RemoveArgs {
+                key: Some("subdir/file2".to_string()),
+                recurse: false,
+            },
+        );
+        assert!(result_file.is_ok());
+
+        assert!(!dir.path().join("subdir").exists());
+    }
 }
