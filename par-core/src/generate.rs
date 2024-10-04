@@ -1,7 +1,6 @@
-use crate::generate::wordlist::WORDLIST;
-use rand::prelude::{IteratorRandom, SliceRandom};
+use rand::prelude::IteratorRandom;
 
-mod wordlist;
+const WORDLIST: &str = include_str!("../eff_large.wordlist");
 
 const PRINTABLE_ASCII: &str = r#"!"$#%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~"#;
 
@@ -15,7 +14,7 @@ pub fn generate_password(len: u8) -> String {
 }
 
 fn random_word() -> &'static str {
-    WORDLIST.choose(&mut rand::thread_rng()).unwrap()
+    WORDLIST.lines().choose(&mut rand::thread_rng()).unwrap()
 }
 
 pub fn random_ascii() -> char {
@@ -27,12 +26,12 @@ pub fn random_ascii() -> char {
 
 #[cfg(test)]
 mod tests {
-    use crate::generate::wordlist::WORDLIST;
+    use super::*;
     use itertools::Itertools;
 
     #[test]
     fn test_wordlist() {
-        let unique: Vec<_> = WORDLIST.iter().unique().collect();
+        let unique: Vec<_> = WORDLIST.lines().unique().collect();
         let len = unique.len();
         assert!(
             len > 5000,
