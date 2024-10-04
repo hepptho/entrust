@@ -1,7 +1,9 @@
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use std::io;
+use std::borrow::Cow;
 use std::io::{BufRead, Write};
+use std::sync::LazyLock;
+use std::{env, io};
 
 pub mod client;
 pub mod server;
@@ -24,3 +26,9 @@ fn read_deserialized<R: DeserializeOwned, C: BufRead>(con: &mut C) -> io::Result
     buf.pop();
     bincode::deserialize_from(buf.as_slice()).map_err(io::Error::other)
 }
+
+static SOCKET_NAME: LazyLock<Cow<str>> = LazyLock::new(|| {
+    env::var("PAR_AGENT_SOCKET_NAME")
+        .map(Cow::Owned)
+        .unwrap_or(Cow::Borrowed("par-agent.sock"))
+});

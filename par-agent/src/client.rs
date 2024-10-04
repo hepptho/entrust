@@ -1,5 +1,5 @@
 use crate::server::{GetAgeIdentityResponse, Request};
-use crate::{read_deserialized, send_serialized};
+use crate::{read_deserialized, send_serialized, SOCKET_NAME};
 use interprocess::local_socket::prelude::*;
 use interprocess::local_socket::{GenericFilePath, GenericNamespaced, Stream};
 use std::io;
@@ -30,9 +30,9 @@ pub fn is_server_running() -> bool {
 
 fn connect() -> io::Result<BufReader<Stream>> {
     let socket_name = if GenericNamespaced::is_supported() {
-        "par-agent.sock".to_ns_name::<GenericNamespaced>()?
+        SOCKET_NAME.as_ref().to_ns_name::<GenericNamespaced>()?
     } else {
-        "/tmp/par-agent.sock".to_fs_name::<GenericFilePath>()?
+        format!("/tmp/{}", SOCKET_NAME.as_ref()).to_fs_name::<GenericFilePath>()?
     };
     Stream::connect(socket_name).map(BufReader::new)
 }

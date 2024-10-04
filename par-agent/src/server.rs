@@ -3,7 +3,7 @@ mod request;
 
 use crate::server::event::EventSender;
 use crate::server::HandleResult::{Break, Continue};
-use crate::{read_deserialized, send_serialized};
+use crate::{read_deserialized, send_serialized, SOCKET_NAME};
 pub use event::ServerEvent;
 use interprocess::local_socket::traits::ListenerExt;
 use interprocess::local_socket::{
@@ -43,7 +43,7 @@ pub fn run_with_idle_timeout(timeout: Duration) -> io::Result<()> {
 pub fn run(event_sender: Option<mpsc::Sender<ServerEvent>>) -> io::Result<()> {
     let mut state = State::default();
 
-    let socket_name = "par-agent.sock".to_ns_name::<GenericNamespaced>()?;
+    let socket_name = SOCKET_NAME.to_ns_name::<GenericNamespaced>()?;
 
     let options = ListenerOptions::new()
         .name(socket_name)

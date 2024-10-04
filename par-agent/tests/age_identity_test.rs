@@ -3,11 +3,12 @@ use par_agent::server;
 use par_agent::server::{GetAgeIdentityResponse, ServerEvent};
 use std::io::ErrorKind;
 use std::sync::mpsc;
-use std::thread;
 use std::time::Duration;
+use std::{env, thread};
 
 #[test]
 fn test_age_identity() {
+    env::set_var("PAR_AGENT_SOCKET_NAME", "par_test_age_identity.sock");
     let (event_sender, event_receiver) = mpsc::channel::<ServerEvent>();
     thread::spawn(move || server::run(Some(event_sender)).unwrap());
     let started = event_receiver
