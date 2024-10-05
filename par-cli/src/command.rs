@@ -43,7 +43,7 @@ const LONG_ABOUT: &str = cstr!(
 #[derive(Parser, Debug)]
 #[command(author, version = crate::build_info::HASH, propagate_version = true,
 about = ABOUT, long_about = LONG_ABOUT, bin_name = bin_name(),
-styles = theme::clap_theme())]
+styles = theme::load_clap_theme())]
 pub struct ParArgs {
     #[command(subcommand)]
     pub command: Option<ParSubcommand>,

@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use std::ops::Deref;
 use std::sync::LazyLock;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Theme {
     pub cursor_on_style: Style,
     pub cursor_off_style: Style,

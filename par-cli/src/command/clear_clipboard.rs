@@ -1,3 +1,4 @@
+use crate::theme::color;
 use anyhow::anyhow;
 use clap::Args;
 use color_print::cprintln;
@@ -57,8 +58,13 @@ pub(crate) fn clear_in_new_process(content: &str, delay_seconds: u32) -> anyhow:
     let mut stdin = child.stdin.take().unwrap();
     stdin.write_all(content.as_bytes())?;
     drop(stdin);
-    cprintln!(
-        "<bright-black>The clipboard will be cleared in {delay_seconds}s if it has not changed."
-    );
+    if color() {
+        cprintln!(
+            "<bright-black>The clipboard will be cleared in {delay_seconds}s if it has not changed."
+        );
+    } else {
+        println!("The clipboard will be cleared in {delay_seconds}s if it has not changed.");
+    };
+
     Ok(())
 }

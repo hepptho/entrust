@@ -1,19 +1,19 @@
 use anyhow::anyhow;
-use color_print::cprintln;
-use std::io::IsTerminal;
+use std::fs;
 use std::path::Path;
-use std::{env, fs, io};
 
+use crate::theme::{color, load_clap_theme};
 use termtree::Tree;
-
-fn color() -> bool {
-    env::var("NO_COLOR").is_err() && io::stdout().is_terminal()
-}
 
 pub fn print_tree(base: &Path) -> anyhow::Result<()> {
     let tree = tree(base)?;
     if color() {
-        cprintln!("\n<yellow,bold>Password Store:</>");
+        let theme = load_clap_theme();
+        println!(
+            "\n{}Password Store:{}",
+            theme.get_header().render(),
+            theme.get_header().render_reset()
+        );
     } else {
         println!("\nPassword Store:")
     }
