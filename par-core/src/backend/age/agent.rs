@@ -35,7 +35,14 @@ fn start_agent() -> io::Result<()> {
     let par_agent_bin = env::var("PAR_AGENT_BIN")
         .map(Cow::Owned)
         .unwrap_or("par-agent".into());
-    Command::new(par_agent_bin.as_ref())
+    let mut command = if cfg!(windows) {
+        let mut ccommand = Command::new("pwsh");
+        ccommand.args(["-C", "Start-Process", par_agent_bin.as_ref()]);
+        ccommand
+    } else {
+        Command::new(par_agent_bin.as_ref())
+    };
+    command
         .arg(seconds)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
