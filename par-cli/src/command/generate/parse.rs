@@ -7,7 +7,7 @@ pub struct GenerateArgs {
     #[arg(default_value = "phrase")]
     pub(crate) r#type: Type,
     #[command(flatten)]
-    pub(crate) output: OutputArgs,
+    output: OutputArgs,
     /// Length of the password (default: 7 words for type phrase; 20 characters for type word)
     #[arg(short, long)]
     length: Option<u8>,
@@ -23,23 +23,6 @@ pub struct GenerateArgs {
     /// Choose gpg or age for en-/decryption
     #[arg(short, long, value_enum, default_value_t = BackendValueEnum::Age)]
     pub(crate) backend: BackendValueEnum,
-}
-
-impl GenerateArgs {
-    pub(crate) fn length(&self) -> u8 {
-        self.length.unwrap_or(match self.r#type {
-            Type::Phrase => 7,
-            Type::Word => 20,
-        })
-    }
-
-    pub(crate) fn needs_backend(&self) -> Option<Backend> {
-        if self.output.store.is_some() {
-            Some(self.backend.into())
-        } else {
-            None
-        }
-    }
 }
 
 #[derive(ValueEnum, Clone, Debug)]
@@ -63,9 +46,24 @@ pub(crate) struct OutputArgs {
     store: Option<String>,
 }
 
-impl OutputArgs {
+impl GenerateArgs {
+    pub(crate) fn length(&self) -> u8 {
+        self.length.unwrap_or(match self.r#type {
+            Type::Phrase => 7,
+            Type::Word => 20,
+        })
+    }
+
+    pub(crate) fn needs_backend(&self) -> Option<Backend> {
+        if self.output.store.is_some() {
+            Some(self.backend.into())
+        } else {
+            None
+        }
+    }
+
     pub(crate) fn output(&self) -> Output {
-        match &self {
+        match &self.output {
             OutputArgs {
                 stdout: _,
                 clipboard: true,

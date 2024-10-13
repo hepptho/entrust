@@ -26,7 +26,7 @@ pub fn run(store: PathBuf, args: GenerateArgs) -> anyhow::Result<()> {
 }
 
 fn output(store: &Path, args: GenerateArgs, pass: String) -> anyhow::Result<()> {
-    match args.output.output() {
+    match args.output() {
         Output::Stdout => {
             if !args.no_anim && io::stdout().is_terminal() {
                 animate(&pass);
