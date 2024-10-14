@@ -4,7 +4,8 @@ use par_agent::server::GetAgeIdentityResponse;
 use std::borrow::Cow;
 use std::io::ErrorKind;
 use std::process::{Command, Stdio};
-use std::{env, io};
+use std::time::Duration;
+use std::{env, io, thread};
 
 pub fn get_identity() -> anyhow::Result<Vec<u8>> {
     let result = par_agent::client::get_age_identity(env::var("PAR_AGENT_PIN").ok());
@@ -19,10 +20,7 @@ pub fn get_identity() -> anyhow::Result<Vec<u8>> {
     }
 
     let id = read_identity()?;
-    par_agent::client::set_age_identity(
-        String::from_utf8(id.clone())?,
-        env::var("PAR_AGENT_PIN").ok(),
-    )?;
+    set_identity(&id)?;
     Ok(id)
 }
 
@@ -49,4 +47,20 @@ fn start_agent() -> io::Result<()> {
         .stderr(Stdio::null())
         .spawn()
         .map(|_| ())
+}
+
+fn set_identity(id: &[u8]) -> anyhow::Result<()> {
+    let string = String::from_utf8(id.to_vec())?;
+    let result = par_agent::client::set_age_identity(string, env::var("PAR_AGENT_PIN").ok());
+    match result {
+        Err(e) if e.kind() == ErrorKind::NotFound => {
+            thread::sleep(Duration::from_millis(100));
+            par_agent::client::set_age_identity(
+                String::from_utf8(id.to_vec())?,
+                env::var("PAR_AGENT_PIN").ok(),
+            )
+        }
+        result => result,
+    }?;
+    Ok(())
 }
