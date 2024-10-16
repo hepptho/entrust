@@ -4,6 +4,7 @@ pub mod completions;
 pub mod edit;
 pub mod generate;
 pub mod get;
+mod git;
 mod identity;
 pub mod r#move;
 pub mod remove;
@@ -15,6 +16,7 @@ use crate::command::completions::CompletionsArgs;
 use crate::command::edit::EditArgs;
 use crate::command::generate::parse::GenerateArgs;
 use crate::command::get::GetArgs;
+use crate::command::git::GitArgs;
 use crate::command::r#move::MoveArgs;
 use crate::command::remove::RemoveArgs;
 use crate::tree::print_tree;
@@ -92,6 +94,8 @@ pub enum ParSubcommand {
     Completions(CompletionsArgs),
     #[command(about = "Print a tree of the password store")]
     Tree,
+    #[command(about = git::ABOUT)]
+    Git(GitArgs),
     #[command(hide = true)]
     ClearClipboard(ClearClipboardArgs),
     #[command(hide = true)]
@@ -112,6 +116,7 @@ pub fn run(par: ParArgs) -> anyhow::Result<()> {
         Some(ParSubcommand::Move(args)) => r#move::run(par.store, args),
         Some(ParSubcommand::Remove(args)) => remove::run(par.store, args),
         Some(ParSubcommand::Tree) => print_tree(&par.store),
+        Some(ParSubcommand::Git(args)) => git::run(par.store, args),
         None => {
             ParArgs::command().print_help()?;
             print_tree(&par.store)?;
