@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 use std::fs;
-use std::io::{stdin, IsTerminal};
+use std::io::{stdin, IsTerminal, Read};
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
@@ -20,7 +20,7 @@ pub(super) const LONG_ABOUT: &str = cstr!(
   Change an existing password
 
   Displays the old password and offers an interactive prompt if <bold,#ffb86c>stdin</> is empty, \
-  otherwise reads a line from stdin."
+  otherwise reads from stdin."
 );
 
 #[derive(Args, Debug)]
@@ -73,6 +73,6 @@ fn edit_interactive(cleartext: bool, bak: &Path) -> anyhow::Result<String> {
 
 fn edit_non_interactive() -> anyhow::Result<String> {
     let mut buf = String::with_capacity(16);
-    stdin().read_line(&mut buf)?;
+    stdin().read_to_string(&mut buf)?;
     Ok(buf)
 }

@@ -5,6 +5,9 @@ use ratatui::prelude::{Line, Span, Widget};
 use ratatui::style::{Color, Style};
 use ratatui::widgets::Paragraph;
 
+const NEWLINE_PLACEHOLDER: char = '␤';
+const CARRIAGE_RETURN_PLACEHOLDER: char = '␍';
+
 impl<'p, 'c> Widget for &mut InputDialog<'p, 'c> {
     fn render(self, area: Rect, buf: &mut Buffer)
     where
@@ -70,11 +73,18 @@ impl<'p, 'c> InputDialog<'p, 'c> {
                 if from_cursor.is_empty() {
                     (completion_first_char.unwrap_or(' '), true)
                 } else {
-                    (*from_cursor.iter().next().unwrap(), false)
+                    let at = from_cursor.iter().next().unwrap();
+                    let at = *replace_newline(at);
+                    (at, false)
                 }
             };
-            let after_cursor: String = from_cursor.iter().skip(1).collect();
-            spans.push(Span::raw(before_cursor.iter().collect::<String>()));
+            let after_cursor: String = from_cursor.iter().skip(1).map(replace_newline).collect();
+            spans.push(Span::raw(
+                before_cursor
+                    .iter()
+                    .map(replace_newline)
+                    .collect::<String>(),
+            ));
             let at_cursor_style = if is_cursor_at_completion {
                 cursor_style.patch(self.theme.completion_style)
             } else {
@@ -112,6 +122,14 @@ impl<'p, 'c> InputDialog<'p, 'c> {
                 )
             })
             .collect()
+    }
+}
+
+fn replace_newline(char: &char) -> &char {
+    match char {
+        '\n' => &NEWLINE_PLACEHOLDER,
+        '\r' => &CARRIAGE_RETURN_PLACEHOLDER,
+        c => c,
     }
 }
 

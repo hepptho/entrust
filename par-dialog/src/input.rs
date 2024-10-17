@@ -114,6 +114,8 @@ impl<'p, 'c> Dialog for InputDialog<'p, 'c> {
             Key(ke) => match ke {
                 cancel_key_event!() => Update::Cancel.into(),
                 kep!(KeyCode::Char('h'), KeyModifiers::ALT) => Update::ToggleMask.into(),
+                kep!(KeyCode::Char('n'), KeyModifiers::ALT) => Update::InsertChar('\n').into(),
+                kep!(KeyCode::Char('r'), KeyModifiers::ALT) => Update::InsertChar('\r').into(),
                 kep!(KeyCode::Char(char)) => Update::InsertChar(char).into(),
                 kep!(KeyCode::Backspace) => Update::DeleteBeforeCursor.into(),
                 kep!(KeyCode::Delete) => Update::DeleteAfterCursor.into(),
