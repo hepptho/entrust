@@ -12,8 +12,7 @@ fn main() -> io::Result<()> {
         let seconds = arg
             .as_ref()
             .map(|s| s.parse::<u64>())
-            .transpose()
-            .unwrap_or(Some(600))
+            .and_then(|r| r.ok())
             .unwrap_or(600);
         par_agent::server::run_with_idle_timeout(Duration::from_secs(seconds))
     } else {
