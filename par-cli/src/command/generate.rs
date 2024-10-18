@@ -36,8 +36,8 @@ fn output(store: &Path, args: GenerateArgs, pass: String) -> anyhow::Result<()> 
                 print!("{pass}");
             }
         }
-        Output::Clipboard => {
-            copy_to_clipboard(pass)?;
+        Output::Clipboard(clear_delay_seconds) => {
+            copy_to_clipboard(pass, clear_delay_seconds)?;
         }
         Output::Store(key) => {
             let location = par_core::resolve_new_location(store, key)?;
@@ -48,14 +48,14 @@ fn output(store: &Path, args: GenerateArgs, pass: String) -> anyhow::Result<()> 
             if !args.no_git {
                 git::add(store, key)?;
             }
-            copy_to_clipboard(pass)?;
+            copy_to_clipboard(pass, 10)?;
         }
     }
     Ok(())
 }
 
-fn copy_to_clipboard(pass: String) -> anyhow::Result<()> {
-    clear_clipboard::clear_in_new_process(pass.as_str(), 10)?;
+fn copy_to_clipboard(pass: String, clear_delay_seconds: u32) -> anyhow::Result<()> {
+    clear_clipboard::clear_in_new_process(pass.as_str(), clear_delay_seconds)?;
     ClipboardContext::new()
         .and_then(|mut ctx| ctx.set_contents(pass))
         .map_err(|_| anyhow!("Could not access clipboard"))?;

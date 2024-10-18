@@ -38,10 +38,18 @@ pub(crate) struct OutputArgs {
     #[arg(long, help_heading = "Output")]
     stdout: bool,
     /// Copy the generated password to the clipboard
-    #[arg(short, long, help_heading = "Output")]
-    clipboard: bool,
-    /// Encrypt and store the generated password under the given key;
-    /// also copy it to the clipboard
+    #[arg(
+        short,
+        long,
+        default_missing_value = "10",
+        num_args = 0..=1,
+        require_equals = true,
+        value_name = "CLEAR AFTER SECONDS",
+        help_heading = "Output",
+    )]
+    clipboard: Option<u32>,
+    /// Encrypt and store the generated password under the given key
+    /// (also copy it to the clipboard)
     #[arg(short, long, help_heading = "Output", value_name = "KEY")]
     store: Option<String>,
 }
@@ -65,14 +73,11 @@ impl GenerateArgs {
     pub(crate) fn output(&self) -> Output {
         match &self.output {
             OutputArgs {
-                stdout: _,
-                clipboard: true,
-                store: _,
-            } => Output::Clipboard,
+                clipboard: Some(clear_delay_seconds),
+                ..
+            } => Output::Clipboard(*clear_delay_seconds),
             OutputArgs {
-                stdout: _,
-                clipboard: _,
-                store: Some(key),
+                store: Some(key), ..
             } => Output::Store(key),
             _ => Output::Stdout,
         }
@@ -81,6 +86,6 @@ impl GenerateArgs {
 
 pub(crate) enum Output<'a> {
     Stdout,
-    Clipboard,
+    Clipboard(u32),
     Store(&'a String),
 }
