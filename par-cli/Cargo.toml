@@ -30,6 +30,7 @@ clap_complete = "4.5"
 color-print = "0.3"
 const_format = "0.2"
 copypasta = "0.10"
+enigo = "0.2"
 itertools = { workspace = true }
 rand = { workspace = true }
 shlex = "1.3"

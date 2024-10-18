@@ -1,9 +1,13 @@
 pub fn apply_aliases(args: &mut Vec<String>) {
-    if let Some(second) = args.get(1) {
-        if second == "c" || second == "copy" {
+    match args.get(1).map(|s| s.as_str()) {
+        Some("c") | Some("copy") => {
             args[1] = "get".to_string();
             args.insert(2, "-c".to_string())
         }
+        Some("a") | Some("t") | Some("type") => {
+            args[1] = "autotype".to_string();
+        }
+        _ => {}
     }
 }
 

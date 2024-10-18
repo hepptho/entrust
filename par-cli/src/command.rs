@@ -1,4 +1,5 @@
 pub mod add;
+mod autotype;
 pub mod clear_clipboard;
 pub mod completions;
 pub mod edit;
@@ -11,6 +12,7 @@ pub mod remove;
 mod shell;
 
 use crate::command::add::AddArgs;
+use crate::command::autotype::AutotypeArgs;
 use crate::command::clear_clipboard::ClearClipboardArgs;
 use crate::command::completions::CompletionsArgs;
 use crate::command::edit::EditArgs;
@@ -90,6 +92,8 @@ pub enum ParSubcommand {
     Remove(RemoveArgs),
     #[command(about = generate::ABOUT, alias = "gen")]
     Generate(GenerateArgs),
+    #[command(about = autotype::ABOUT, alias = "type")]
+    Autotype(AutotypeArgs),
     #[command(about = completions::ABOUT)]
     Completions(CompletionsArgs),
     #[command(about = "Print a tree of the password store")]
@@ -115,6 +119,7 @@ pub fn run(par: ParArgs) -> anyhow::Result<()> {
         Some(ParSubcommand::Get(args)) => get::run(par.store, args),
         Some(ParSubcommand::Move(args)) => r#move::run(par.store, args),
         Some(ParSubcommand::Remove(args)) => remove::run(par.store, args),
+        Some(ParSubcommand::Autotype(args)) => autotype::run(par.store, args),
         Some(ParSubcommand::Tree) => print_tree(&par.store),
         Some(ParSubcommand::Git(args)) => git::run(par.store, args),
         None => {

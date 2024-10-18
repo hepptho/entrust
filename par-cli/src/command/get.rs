@@ -22,18 +22,15 @@ pub struct GetArgs {
     /// The key of the password to decrypt
     key: Option<String>,
     /// Copy the password to the clipboard
-    #[arg(short, long)]
-    clipboard: bool,
-    /// Delay in seconds after which the clipboard should be cleared
-    /// (only effective with --clipboard)
     #[arg(
-        short = 'd',
+        short,
         long,
-        default_value_t = 10,
-        value_name = "SECONDS",
-        requires = "clipboard"
+        default_missing_value = "10",
+        num_args = 0..=1,
+        require_equals = true,
+        value_name = "CLEAR AFTER SECONDS",
     )]
-    clear_clipboard_delay: u32,
+    clipboard: Option<u32>,
 }
 
 pub fn run(store: PathBuf, args: GetArgs) -> anyhow::Result<()> {
@@ -42,8 +39,9 @@ pub fn run(store: PathBuf, args: GetArgs) -> anyhow::Result<()> {
         .unwrap_or_select_existing(&store)
         .and_then(|key| resolve_existing_location(&store, &key, false))?;
     let decrypted = Backend::decrypt(location)?;
-    if args.clipboard {
-        clear_clipboard::clear_in_new_process(decrypted.as_str(), args.clear_clipboard_delay)?;
+
+    if let Some(clear_after_seconds) = args.clipboard {
+        clear_clipboard::clear_in_new_process(decrypted.as_str(), clear_after_seconds)?;
         ClipboardContext::new()
             .and_then(|mut ctx| ctx.set_contents(decrypted))
             .map_err(|_| anyhow!("Could not access Clipboard"))?;
