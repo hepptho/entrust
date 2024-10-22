@@ -16,7 +16,7 @@ use crate::command::autotype::AutotypeArgs;
 use crate::command::clear_clipboard::ClearClipboardArgs;
 use crate::command::completions::CompletionsArgs;
 use crate::command::edit::EditArgs;
-use crate::command::generate::parse::GenerateArgs;
+use crate::command::generate::GenerateArgs;
 use crate::command::get::GetArgs;
 use crate::command::git::GitArgs;
 use crate::command::r#move::MoveArgs;
@@ -25,6 +25,7 @@ use crate::tree::print_tree;
 use crate::{init, theme};
 use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
 use color_print::cstr;
+use const_format::formatcp;
 use par_core::Backend;
 use std::path::PathBuf;
 use std::{env, fs};
@@ -36,10 +37,8 @@ const ABOUT: &str = cstr!(
 "
 );
 
-const LONG_ABOUT: &str = cstr!(
-    "
-
-  Manage passwords using <bold,#ffb86c>age</> or <bold,#ffb86c>gpg</>
+const LONG_ABOUT: &str = formatcp!(
+    "{ABOUT}  \
   Locations of files to en/decrypt can be given relative to the root of the password store
 "
 );
@@ -51,7 +50,7 @@ styles = theme::load_clap_theme())]
 pub struct ParArgs {
     #[command(subcommand)]
     pub command: Option<ParSubcommand>,
-    /// The directory in which the passwords are stored
+    /// The directory in which the encrypted passwords are stored
     #[arg(short, long, env = par_core::PAR_STORE_ENV_VAR, value_name = "DIR", value_parser = parse_store)]
     pub store: PathBuf,
 }

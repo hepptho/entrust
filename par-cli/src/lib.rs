@@ -1,5 +1,5 @@
 pub mod alias;
-mod autotype;
+mod animation;
 pub mod command;
 mod dialog;
 mod init;

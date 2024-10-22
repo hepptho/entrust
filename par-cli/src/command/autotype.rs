@@ -1,10 +1,13 @@
-use crate::{autotype, dialog};
+use crate::dialog;
 use anyhow::anyhow;
 use clap::Args;
 use color_print::cstr;
 use const_format::formatcp;
+use enigo::{Direction, Enigo, Key, Keyboard, Settings};
 use par_core::{resolve_existing_location, Backend};
 use std::path::{Path, PathBuf};
+use std::thread;
+use std::time::Duration;
 
 pub(super) const ABOUT: &str = "Autotype into the previously active window";
 
@@ -35,13 +38,13 @@ enum Segment {
 pub fn run(store: PathBuf, args: AutotypeArgs) -> anyhow::Result<()> {
     let segments = parse_segments(args.segments.as_str(), store.as_path())?;
     if !segments.is_empty() {
-        autotype::alt_tab()?;
+        autotype_alt_tab()?;
     }
     for segment in segments {
         match segment {
-            Segment::Pass(pass) => autotype::text(pass)?,
-            Segment::Tab => autotype::tab()?,
-            Segment::Enter => autotype::enter()?,
+            Segment::Pass(pass) => autotype_text(pass)?,
+            Segment::Tab => autotype_tab()?,
+            Segment::Enter => autotype_enter()?,
         }
     }
     Ok(())
@@ -67,4 +70,34 @@ fn parse_segment(string: &str, store: &Path) -> anyhow::Result<Segment> {
             Ok(Segment::Pass(pass))
         }
     }
+}
+
+fn autotype_alt_tab() -> anyhow::Result<()> {
+    let mut enigo = Enigo::new(&Settings::default())?;
+    enigo.key(Key::Alt, Direction::Press)?;
+    enigo.key(Key::Tab, Direction::Click)?;
+    enigo.key(Key::Alt, Direction::Release)?;
+    Ok(())
+}
+
+fn autotype_tab() -> anyhow::Result<()> {
+    let mut enigo = Enigo::new(&Settings::default())?;
+    enigo.key(Key::Tab, Direction::Click)?;
+    Ok(())
+}
+
+fn autotype_enter() -> anyhow::Result<()> {
+    let mut enigo = Enigo::new(&Settings::default())?;
+    enigo.key(Key::Return, Direction::Click)?;
+    Ok(())
+}
+
+fn autotype_text(text: impl AsRef<str>) -> anyhow::Result<()> {
+    let mut enigo = Enigo::new(&Settings::default())?;
+    thread::sleep(Duration::from_millis(500));
+    // workaround for https://github.com/enigo-rs/enigo/issues/303
+    for line in itertools::intersperse(text.as_ref().split('\n'), "\n") {
+        enigo.text(line)?;
+    }
+    Ok(())
 }

@@ -1,5 +1,4 @@
 use color_print::cformat;
-use par_core;
 use rand::prelude::SliceRandom;
 use std::cmp::min;
 use std::io::Write;
@@ -9,24 +8,28 @@ use std::{io, thread};
 pub(crate) fn animate(pass: &str) {
     let len = pass.len();
     let mut state: Vec<Option<char>> = vec![None; len];
+    let mut buf = String::with_capacity(len * 10);
+    for _ in 0..5 {
+        print_state(&state, &mut buf);
+    }
     while let Some(&i) = missing_indexes(&state).choose(&mut rand::thread_rng()) {
-        advance_and_print_state(pass, &mut state, i);
+        state[i] = pass.chars().nth(i);
+        print_state(&state, &mut buf);
     }
 }
 
-fn advance_and_print_state(pass: &str, state: &mut [Option<char>], i: usize) {
-    state[i] = pass.chars().nth(i);
-    let s = state.iter().fold(String::new(), |mut acc, &elem| {
+fn print_state(state: &[Option<char>], buf: &mut String) {
+    buf.clear();
+    for elem in state {
         if let Some(char) = elem {
-            acc.push_str(cformat!("<bold>{char}</>").as_str());
+            buf.push_str(cformat!("<bold>{char}</>").as_str());
         } else {
-            acc.push(par_core::random_ascii());
+            buf.push(par_core::random_ascii());
         }
-        acc
-    });
-    print!("\r{s}");
+    }
+    print!("\r{buf}");
     io::stdout().flush().unwrap();
-    thread::sleep(Duration::from_millis(min(50, 2000 / pass.len()) as u64));
+    thread::sleep(Duration::from_millis(min(50, 2000 / state.len()) as u64));
 }
 
 fn missing_indexes(state: &[Option<char>]) -> Vec<usize> {
