@@ -9,5 +9,5 @@ rust-version = "1.80" # because of LazyLock
 [dependencies]
 anyhow = "1.0"
 fuzzy-matcher = "0.3"
-ratatui = "0.28"
+ratatui = "0.29"
 tracing = { workspace = true }
