@@ -1,6 +1,6 @@
 [workspace]
-members = ["par-core", "par-cli", "par-dialog", "par-agent"]
-default-members = ["par-cli"]
+members = ["entrust", "entrust-core", "entrust-dialog", "entrust-agent"]
+default-members = ["entrust"]
 resolver = "2"
 
 [profile.dev.package."*"]

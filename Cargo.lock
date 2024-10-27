@@ -452,6 +452,61 @@ dependencies = [
 ]
 
 [[package]]
+name = "entrust"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "clap_complete",
+ "color-print",
+ "const_format",
+ "copypasta",
+ "enigo",
+ "entrust-agent",
+ "entrust-core",
+ "entrust-dialog",
+ "itertools",
+ "rand",
+ "shlex",
+ "tempfile",
+ "termtree",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "entrust-agent"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "interprocess",
+ "serde",
+]
+
+[[package]]
+name = "entrust-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "entrust-agent",
+ "itertools",
+ "pathdiff",
+ "rand",
+ "tempfile",
+ "walkdir",
+]
+
+[[package]]
+name = "entrust-dialog"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "fuzzy-matcher",
+ "ratatui",
+ "tracing",
+]
+
+[[package]]
 name = "equivalent"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -827,61 +882,6 @@ name = "overload"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
-
-[[package]]
-name = "par-agent"
-version = "0.1.0"
-dependencies = [
- "bincode",
- "interprocess",
- "serde",
-]
-
-[[package]]
-name = "par-cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "clap_complete",
- "color-print",
- "const_format",
- "copypasta",
- "enigo",
- "itertools",
- "par-agent",
- "par-core",
- "par-dialog",
- "rand",
- "shlex",
- "tempfile",
- "termtree",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "par-core"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "itertools",
- "par-agent",
- "pathdiff",
- "rand",
- "tempfile",
- "walkdir",
-]
-
-[[package]]
-name = "par-dialog"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "fuzzy-matcher",
- "ratatui",
- "tracing",
-]
 
 [[package]]
 name = "parking_lot"

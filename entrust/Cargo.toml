@@ -1,0 +1,42 @@
+[package]
+name = "entrust"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.80" # for LazyLock
+default-run = "ent"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "ent"
+
+[[bin]]
+name = "ent-agent"
+path = "src/bin/ent_agent.rs"
+required-features = ["agent"]
+
+[features]
+agent = ["entrust-core/agent", "dep:entrust-agent"]
+tracing = ["dep:tracing", "dep:tracing-subscriber"]
+
+[dependencies]
+entrust-agent = { path = "../entrust-agent", optional = true }
+entrust-core = { path = "../entrust-core" }
+entrust-dialog = { path = "../entrust-dialog" }
+
+anyhow = "1.0"
+clap = { version = "4.5", features = ["derive", "env", "wrap_help"] }
+clap_complete = "4.5"
+color-print = "0.3"
+const_format = "0.2"
+copypasta = "0.10"
+enigo = "0.2"
+itertools = { workspace = true }
+rand = { workspace = true }
+shlex = "1.3"
+termtree = "0.5.0"
+tracing = { workspace = true, optional = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"], optional = true }
+
+[dev-dependencies]
+tempfile = "3.13"
