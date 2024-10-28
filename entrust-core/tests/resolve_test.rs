@@ -20,11 +20,13 @@ fn setup_test_store() -> io::Result<TempDir> {
 #[test]
 fn test_get_all() -> anyhow::Result<()> {
     let test_store = setup_test_store()?;
-    let existing = entrust_core::get_existing_locations(test_store.path())?;
+    let mut existing = entrust_core::get_existing_locations(test_store.path())?;
+    existing.files.sort();
     assert_eq!(
         vec!["dir1/file1", "dir1/file2", "dir2/pass", "file1", "file2"],
         existing.files
     );
+    existing.dirs.sort();
     assert_eq!(vec!["dir1/", "dir2/"], existing.dirs);
     Ok(())
 }
