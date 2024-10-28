@@ -2,6 +2,12 @@
 name = "entrust-agent"
 version = "0.1.0"
 edition = "2021"
+description = "A gpg-agent-like background agent for entrust"
+
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+license.workspace = true
 
 [dependencies]
 bincode = "1.3"

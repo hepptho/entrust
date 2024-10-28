@@ -4,6 +4,15 @@ version = "0.1.0"
 edition = "2021"
 rust-version = "1.80" # for LazyLock
 default-run = "ent"
+readme = "../README.md"
+categories = ["command-line-utilities"]
+keywords = ["cli"]
+description = "A CLI password manager"
+
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+license.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -20,9 +29,9 @@ agent = ["entrust-core/agent", "dep:entrust-agent"]
 tracing = ["dep:tracing", "dep:tracing-subscriber"]
 
 [dependencies]
-entrust-agent = { path = "../entrust-agent", optional = true }
-entrust-core = { path = "../entrust-core" }
-entrust-dialog = { path = "../entrust-dialog" }
+entrust-agent = { path = "../entrust-agent", version = "0.1.0", optional = true }
+entrust-core = { path = "../entrust-core", version = "0.1.0" }
+entrust-dialog = { path = "../entrust-dialog", version = "0.1.0" }
 
 anyhow = "1.0"
 clap = { version = "4.5", features = ["derive", "env", "wrap_help"] }
