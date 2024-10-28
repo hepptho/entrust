@@ -453,7 +453,7 @@ dependencies = [
 
 [[package]]
 name = "entrust"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "clap",
@@ -476,7 +476,7 @@ dependencies = [
 
 [[package]]
 name = "entrust-agent"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "bincode",
  "interprocess",
@@ -485,7 +485,7 @@ dependencies = [
 
 [[package]]
 name = "entrust-core"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "entrust-agent",

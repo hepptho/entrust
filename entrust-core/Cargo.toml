@@ -1,6 +1,6 @@
 [package]
 name = "entrust-core"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2021"
 description = "En-/decryption and password store management for entrust"
 
@@ -13,7 +13,7 @@ license.workspace = true
 agent = ["dep:entrust-agent"]
 
 [dependencies]
-entrust-agent = { path = "../entrust-agent", version = "0.1.0", optional = true }
+entrust-agent = { path = "../entrust-agent", version = "0.1.2", optional = true }
 
 anyhow = "1.0"
 itertools = { workspace = true }

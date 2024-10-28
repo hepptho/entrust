@@ -1,6 +1,6 @@
 [package]
 name = "entrust"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2021"
 rust-version = "1.80" # for LazyLock
 default-run = "ent"
@@ -29,8 +29,8 @@ agent = ["entrust-core/agent", "dep:entrust-agent"]
 tracing = ["dep:tracing", "dep:tracing-subscriber"]
 
 [dependencies]
-entrust-agent = { path = "../entrust-agent", version = "0.1.0", optional = true }
-entrust-core = { path = "../entrust-core", version = "0.1.0" }
+entrust-agent = { path = "../entrust-agent", version = "0.1.2", optional = true }
+entrust-core = { path = "../entrust-core", version = "0.1.2" }
 entrust-dialog = { path = "../entrust-dialog", version = "0.1.0" }
 
 anyhow = "1.0"

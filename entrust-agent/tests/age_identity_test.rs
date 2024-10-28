@@ -1,7 +1,6 @@
 use entrust_agent::client::{get_age_identity, set_age_identity};
-use entrust_agent::server;
 use entrust_agent::server::{GetAgeIdentityResponse, ServerEvent};
-use std::io::ErrorKind;
+use entrust_agent::{server, NO_AGENT_ERROR_KIND};
 use std::sync::mpsc;
 use std::time::Duration;
 use std::{env, thread};
@@ -56,7 +55,7 @@ fn test_age_identity() {
     );
 
     assert!(
-        get_age_identity(Some("pin".to_string())).is_err_and(|e| e.kind() == ErrorKind::NotFound),
+        get_age_identity(Some("pin".to_string())).is_err_and(|e| e.kind() == NO_AGENT_ERROR_KIND),
         "server should shut down after receiving wrong pin"
     )
 }

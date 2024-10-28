@@ -1,12 +1,17 @@
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::borrow::Cow;
-use std::io::{BufRead, Write};
+use std::io::{BufRead, ErrorKind, Write};
 use std::sync::LazyLock;
 use std::{env, io};
 
 pub mod client;
 pub mod server;
+
+#[cfg(windows)]
+pub const NO_AGENT_ERROR_KIND: ErrorKind = ErrorKind::NotFound;
+#[cfg(not(windows))]
+pub const NO_AGENT_ERROR_KIND: ErrorKind = ErrorKind::ConnectionRefused;
 
 /// ASCII 'End of Transmission'
 const EOT: u8 = 4;
