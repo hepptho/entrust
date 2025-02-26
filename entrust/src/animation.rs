@@ -1,5 +1,5 @@
 use color_print::cformat;
-use rand::prelude::SliceRandom;
+use rand::prelude::IndexedRandom;
 use std::cmp::min;
 use std::io::Write;
 use std::time::Duration;
@@ -12,7 +12,7 @@ pub(crate) fn animate(pass: &str) {
     for _ in 0..5 {
         print_state(&state, &mut buf);
     }
-    while let Some(&i) = missing_indexes(&state).choose(&mut rand::thread_rng()) {
+    while let Some(&i) = missing_indexes(&state).choose(&mut rand::rng()) {
         state[i] = pass.chars().nth(i);
         print_state(&state, &mut buf);
     }

@@ -14,14 +14,11 @@ pub fn generate_password(len: u8) -> String {
 }
 
 fn random_word() -> &'static str {
-    WORDLIST.lines().choose(&mut rand::thread_rng()).unwrap()
+    WORDLIST.lines().choose(&mut rand::rng()).unwrap()
 }
 
 pub fn random_ascii() -> char {
-    PRINTABLE_ASCII
-        .chars()
-        .choose(&mut rand::thread_rng())
-        .unwrap()
+    PRINTABLE_ASCII.chars().choose(&mut rand::rng()).unwrap()
 }
 
 #[cfg(test)]
