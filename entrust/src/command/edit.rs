@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 use std::fs;
-use std::io::{stdin, IsTerminal, Read};
+use std::io::{IsTerminal, Read, stdin};
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
@@ -10,7 +10,7 @@ use color_print::cstr;
 use crate::command::BackendValueEnum;
 use crate::dialog::read_password_interactive;
 use crate::key::Key;
-use entrust_core::{git, resolve_existing_location, Backend};
+use entrust_core::{Backend, git, resolve_existing_location};
 
 pub(super) const ABOUT: &str = "Change an existing password";
 

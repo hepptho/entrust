@@ -1,5 +1,5 @@
-use crate::select::filter::{apply_filter, FilteredItem};
 use crate::select::SelectDialog;
+use crate::select::filter::{FilteredItem, apply_filter};
 use crate::theme::Theme;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Layout, Rect};

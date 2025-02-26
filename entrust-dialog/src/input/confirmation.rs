@@ -1,7 +1,7 @@
 use crate::dialog::DialogState;
+use crate::input::InputDialog;
 use crate::input::prompt::Prompt;
 use crate::input::validator::Validator;
-use crate::input::InputDialog;
 use std::mem;
 
 #[derive(Debug, Clone)]
@@ -65,8 +65,8 @@ impl<'p, 'c> InputDialog<'p, 'c> {
 mod tests {
     use super::*;
     use crate::dialog::Dialog;
-    use crate::input::prompt::Prompt;
     use crate::input::Update;
+    use crate::input::prompt::Prompt;
     use ratatui::prelude::Line;
 
     #[test]

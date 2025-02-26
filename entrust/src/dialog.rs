@@ -1,11 +1,11 @@
-use crate::theme::{chevron_prompt, DIALOG_THEME};
+use crate::theme::{DIALOG_THEME, chevron_prompt};
 use entrust_core::get_existing_locations;
 use entrust_dialog::dialog::Dialog;
+use entrust_dialog::input::InputDialog;
 use entrust_dialog::input::confirmation::Confirmation;
 use entrust_dialog::input::mask::InputMask;
 use entrust_dialog::input::prompt::Prompt;
-use entrust_dialog::input::validator::{validate_filename, Validator};
-use entrust_dialog::input::InputDialog;
+use entrust_dialog::input::validator::{Validator, validate_filename};
 use entrust_dialog::select::SelectDialog;
 use std::borrow::Cow;
 use std::ops::Deref;

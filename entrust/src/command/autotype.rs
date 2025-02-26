@@ -4,7 +4,7 @@ use clap::Args;
 use color_print::cstr;
 use const_format::formatcp;
 use enigo::{Direction, Enigo, Key, Keyboard, Settings};
-use entrust_core::{resolve_existing_location, Backend};
+use entrust_core::{Backend, resolve_existing_location};
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;

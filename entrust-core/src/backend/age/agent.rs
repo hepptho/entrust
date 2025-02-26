@@ -1,7 +1,7 @@
 use crate::age::identity::read_identity;
 use anyhow::anyhow;
-use entrust_agent::server::GetAgeIdentityResponse;
 use entrust_agent::NO_AGENT_ERROR_KIND;
+use entrust_agent::server::GetAgeIdentityResponse;
 use std::borrow::Cow;
 use std::process::{Command, Stdio};
 use std::time::Duration;

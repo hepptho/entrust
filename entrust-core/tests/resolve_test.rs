@@ -1,6 +1,6 @@
 use std::fs::File;
 use std::{fs, io};
-use tempfile::{tempdir, TempDir};
+use tempfile::{TempDir, tempdir};
 
 fn setup_test_store() -> io::Result<TempDir> {
     let temp_dir = tempdir()?;

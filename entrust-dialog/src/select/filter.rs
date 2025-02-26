@@ -1,6 +1,6 @@
 use crate::select::Item;
-use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
+use fuzzy_matcher::skim::SkimMatcherV2;
 use ratatui::widgets::ListState;
 use std::sync::LazyLock;
 

@@ -1,13 +1,13 @@
 use anyhow::anyhow;
 use clap::{Args, ValueEnum};
 use copypasta::{ClipboardContext, ClipboardProvider};
-use entrust_core::{generate_passphrase, generate_password, Backend};
+use entrust_core::{Backend, generate_passphrase, generate_password};
 use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
 use crate::animation::animate;
-use crate::command::{clear_clipboard, BackendValueEnum};
+use crate::command::{BackendValueEnum, clear_clipboard};
 use entrust_core::git;
 
 pub(crate) const ABOUT: &str = "Generate a random password";

@@ -4,7 +4,7 @@ use anyhow::anyhow;
 use clap::Args;
 use color_print::cstr;
 use copypasta::{ClipboardContext, ClipboardProvider};
-use entrust_core::{resolve_existing_location, Backend};
+use entrust_core::{Backend, resolve_existing_location};
 use std::io;
 use std::io::IsTerminal;
 use std::path::PathBuf;

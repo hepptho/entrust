@@ -1,5 +1,5 @@
-use clap::builder::styling::{AnsiColor, Color as ClapColor, Style as ClapStyle};
 use clap::builder::Styles;
+use clap::builder::styling::{AnsiColor, Color as ClapColor, Style as ClapStyle};
 use entrust_dialog::style::{Color as DialogColor, Modifier, Style as DialogStyle, Stylize};
 use entrust_dialog::theme::Theme;
 use std::io::IsTerminal;

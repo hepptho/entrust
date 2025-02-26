@@ -1,5 +1,5 @@
 use crate::server::{GetAgeIdentityResponse, Request};
-use crate::{read_deserialized, send_serialized, SOCKET_NAME};
+use crate::{SOCKET_NAME, read_deserialized, send_serialized};
 use interprocess::local_socket::prelude::*;
 use interprocess::local_socket::{GenericFilePath, GenericNamespaced, Stream};
 use std::io;

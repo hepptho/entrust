@@ -1,13 +1,13 @@
 use crate::alias::apply_aliases;
 use crate::command;
-use crate::command::{bin_name, EntArgs};
+use crate::command::{EntArgs, bin_name};
 use crate::theme::chevron_prompt;
 use anyhow::anyhow;
 use clap::Parser;
 use entrust_core::age;
 use entrust_dialog::dialog::Dialog;
-use entrust_dialog::input::prompt::Prompt;
 use entrust_dialog::input::InputDialog;
+use entrust_dialog::input::prompt::Prompt;
 
 pub fn run() -> anyhow::Result<()> {
     age::identity::get_identity()?;

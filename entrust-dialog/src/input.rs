@@ -19,10 +19,10 @@ use crate::input::prompt::Prompt;
 use crate::input::validator::Validator;
 use crate::theme::Theme;
 use crate::{cancel_key_event, key_event_pattern as kep};
+use ratatui::Viewport;
 use ratatui::crossterm::event::Event::Key;
 use ratatui::crossterm::event::{Event, KeyCode, KeyModifiers};
 use ratatui::prelude::*;
-use ratatui::Viewport;
 use tracing::debug;
 
 #[derive(Debug, Default)]

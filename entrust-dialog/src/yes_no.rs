@@ -1,8 +1,8 @@
 use crate::dialog::{Dialog, DialogState};
 use crate::input;
+use crate::input::InputDialog;
 use crate::input::prompt::Prompt;
 use crate::input::validator::Validator;
-use crate::input::InputDialog;
 use crate::theme::Theme;
 use ratatui::crossterm::event::Event;
 use ratatui::prelude::{Color, Span};

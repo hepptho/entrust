@@ -1,9 +1,9 @@
 mod event;
 mod request;
 
-use crate::server::event::EventSender;
 use crate::server::HandleResult::{Break, Continue};
-use crate::{read_deserialized, send_serialized, SOCKET_NAME};
+use crate::server::event::EventSender;
+use crate::{SOCKET_NAME, read_deserialized, send_serialized};
 pub use event::ServerEvent;
 use interprocess::local_socket::traits::ListenerExt;
 use interprocess::local_socket::{

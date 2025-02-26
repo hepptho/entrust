@@ -9,7 +9,7 @@ use crate::dialog;
 use crate::key::Key;
 use crate::theme::chevron_prompt;
 use entrust_core;
-use entrust_core::{git, Backend};
+use entrust_core::{Backend, git};
 
 pub(super) const ABOUT: &str = "Add a new password";
 

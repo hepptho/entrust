@@ -1,6 +1,6 @@
 use entrust_dialog::dialog::Dialog;
-use entrust_dialog::input::prompt::Prompt;
 use entrust_dialog::input::InputDialog;
+use entrust_dialog::input::prompt::Prompt;
 
 fn main() -> anyhow::Result<()> {
     InputDialog::default()
