@@ -1,8 +1,8 @@
 [package]
 name = "entrust"
 version = "0.1.2"
-edition = "2021"
-rust-version = "1.80" # for LazyLock
+edition = "2024"
+rust-version = "1.85" # for 2024 edition
 default-run = "ent"
 readme = "../README.md"
 categories = ["command-line-utilities"]

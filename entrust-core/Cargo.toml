@@ -1,7 +1,7 @@
 [package]
 name = "entrust-core"
 version = "0.1.2"
-edition = "2021"
+edition = "2024"
 description = "En-/decryption and password store management for entrust"
 
 authors.workspace = true
