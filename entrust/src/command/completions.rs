@@ -1,10 +1,11 @@
 use crate::command::EntArgs;
 use clap::{Args, CommandFactory};
 use clap_complete::{Shell, generate};
-use clap_complete_nushell::Nushell;
 use std::io;
 
 pub(super) const ABOUT: &str = "Generate shell completions";
+
+const NUSHELL_COMPLETIONS: &str = include_str!("../../extern-ent.nu");
 
 #[derive(Args, Debug)]
 pub struct CompletionsArgs {
@@ -20,6 +21,6 @@ pub fn run(args: CompletionsArgs) {
         generate(shell, &mut cmd, &bin_name, &mut io::stdout());
     }
     if args.nushell {
-        generate(Nushell, &mut cmd, &bin_name, &mut io::stdout());
+        print!("{NUSHELL_COMPLETIONS}",)
     }
 }
