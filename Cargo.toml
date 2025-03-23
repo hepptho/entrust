@@ -1,7 +1,7 @@
 [workspace]
 members = ["entrust", "entrust-core", "entrust-dialog", "entrust-agent"]
 default-members = ["entrust"]
-resolver = "2"
+resolver = "3"
 
 [workspace.package]
 authors = ["hepptho"]
