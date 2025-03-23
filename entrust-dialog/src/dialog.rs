@@ -1,7 +1,7 @@
 use ratatui::backend::CrosstermBackend;
 use ratatui::crossterm::event;
 use ratatui::crossterm::event::Event;
-use ratatui::{Frame, Terminal, TerminalOptions, Viewport};
+use ratatui::{Frame, Terminal, TerminalOptions, Viewport, crossterm};
 use std::io;
 use std::time::{Duration, Instant};
 
@@ -22,6 +22,7 @@ pub trait Dialog: Sized {
                 viewport: self.viewport(),
             },
         )?;
+        crossterm::terminal::enable_raw_mode()?;
         let start = Instant::now();
         let mut up_to_date = false;
         let mut timed_out = false;
@@ -52,13 +53,15 @@ pub trait Dialog: Sized {
             }
         }
         terminal.clear()?;
-        if timed_out {
+        let result = if timed_out {
             Err(io::Error::other("timed out"))
         } else if self.state() == DialogState::Cancelled {
             Err(io::Error::other("cancelled"))
         } else {
             Ok(self.output())
-        }
+        };
+        crossterm::terminal::disable_raw_mode()?;
+        result
     }
     fn tick(&mut self) -> bool {
         false
