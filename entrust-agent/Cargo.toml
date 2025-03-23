@@ -1,6 +1,6 @@
 [package]
 name = "entrust-agent"
-version = "0.2.0"
+version = "0.2.2"
 edition = "2024"
 description = "A gpg-agent-like background agent for entrust"
 
