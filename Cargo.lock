@@ -469,7 +469,7 @@ dependencies = [
 
 [[package]]
 name = "entrust"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -514,7 +514,7 @@ dependencies = [
 
 [[package]]
 name = "entrust-dialog"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "fuzzy-matcher",

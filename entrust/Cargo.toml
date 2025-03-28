@@ -1,6 +1,6 @@
 [package]
 name = "entrust"
-version = "0.2.2"
+version = "0.3.0"
 edition = "2024"
 rust-version = "1.85" # for 2024 edition
 default-run = "ent"
@@ -31,7 +31,7 @@ tracing = ["dep:tracing", "dep:tracing-subscriber"]
 [dependencies]
 entrust-agent = { path = "../entrust-agent", version = "0.2.2", optional = true }
 entrust-core = { path = "../entrust-core", version = "0.2.2" }
-entrust-dialog = { path = "../entrust-dialog", version = "0.2.2" }
+entrust-dialog = { path = "../entrust-dialog", version = "0.3.0" }
 
 anyhow = "1.0"
 clap = { version = "4.5", features = ["derive", "env", "wrap_help"] }

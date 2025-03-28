@@ -20,7 +20,10 @@ impl<'f> Validator<'f> {
         Validator::new(validate_not_empty(message))
     }
     pub fn filename() -> Validator<'static> {
-        Validator::new(validate_filename())
+        Validator::new(validate_filename(false))
+    }
+    pub fn filename_cross_platform() -> Validator<'static> {
+        Validator::new(validate_filename(true))
     }
 }
 
@@ -34,20 +37,27 @@ pub fn validate_not_empty(message: &str) -> impl ValidatorFn {
     }
 }
 
-pub fn validate_filename() -> impl ValidatorFn<'static> {
+pub fn validate_filename(cross_platform: bool) -> impl ValidatorFn<'static> {
     const WINDOWS_ILLEGAL_CHARS: &str = r#":*?"<>|"#;
-    |chars| {
+    move |chars| {
         if chars.is_empty() {
             return Some("Filename must not be empty".into());
-        } else if chars.last() == Some(&'/') {
+        }
+        if chars.last() == Some(&'/') {
             return Some("Filename must not end with '/'".into());
         }
-        if cfg!(windows) {
+        if cross_platform || cfg!(windows) {
             let contains_invalid = chars
                 .iter()
                 .any(|char| WINDOWS_ILLEGAL_CHARS.contains(*char));
             if contains_invalid {
                 return Some(format!("Filename must not contain any of the following characters: {WINDOWS_ILLEGAL_CHARS}").into());
+            }
+        }
+        if cross_platform || cfg!(unix) {
+            let bytes_len = chars.iter().fold(0, |acc, e| acc + e.len_utf8());
+            if bytes_len > 255 {
+                return Some("Filename must not be longer than 255 bytes".into());
             }
         }
         None
@@ -73,9 +83,15 @@ impl<'f> Add for Validator<'f> {
     type Output = Validator<'f>;
 
     fn add(self, rhs: Self) -> Self::Output {
-        let combined = move |chars: &[char]| (self.function)(chars).or((rhs.function)(chars));
-        Validator::new(combined)
+        Validator::new(combine(self.function, rhs.function))
     }
+}
+
+pub fn combine<'a>(
+    val_fn_1: impl ValidatorFn<'a>,
+    val_fn_2: impl ValidatorFn<'a>,
+) -> impl ValidatorFn<'a> {
+    move |chars| val_fn_1(chars).or(val_fn_2(chars))
 }
 
 impl<'p, 'c> InputDialog<'p, 'c> {

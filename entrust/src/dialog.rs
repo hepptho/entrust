@@ -5,7 +5,7 @@ use entrust_dialog::input::InputDialog;
 use entrust_dialog::input::confirmation::Confirmation;
 use entrust_dialog::input::mask::InputMask;
 use entrust_dialog::input::prompt::Prompt;
-use entrust_dialog::input::validator::{Validator, validate_filename};
+use entrust_dialog::input::validator::{Validator, ValidatorFn, combine, validate_filename};
 use entrust_dialog::select::SelectDialog;
 use std::borrow::Cow;
 use std::ops::Deref;
@@ -50,13 +50,10 @@ fn match_confirmation() -> Confirmation<'static> {
 
 pub fn read_new_key_interactive(prompt: &'static str, store: &Path) -> anyhow::Result<String> {
     let existing = get_existing_locations(store)?;
-    let validator = Validator::new(move |vec| {
-        validate_filename()(vec).or(if existing.files.contains(&vec.iter().collect()) {
-            Some("Key already exists".into())
-        } else {
-            None
-        })
-    });
+    let validator = Validator::new(combine(
+        validate_filename(true),
+        validate_new_key(existing.files),
+    ));
     let new_key = InputDialog::default()
         .with_prompt(Prompt::inline(prompt))
         .with_validator(validator)
@@ -64,4 +61,14 @@ pub fn read_new_key_interactive(prompt: &'static str, store: &Path) -> anyhow::R
         .with_theme(DIALOG_THEME.deref())
         .run()?;
     Ok(new_key)
+}
+
+fn validate_new_key(existing_files: Vec<String>) -> impl ValidatorFn<'static> {
+    move |chars| {
+        if existing_files.contains(&chars.iter().collect()) {
+            Some("Key already exists".into())
+        } else {
+            None
+        }
+    }
 }
