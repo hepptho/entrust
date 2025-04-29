@@ -1,4 +1,5 @@
 pub mod add;
+#[cfg(feature = "autotype")]
 mod autotype;
 pub mod clear_clipboard;
 pub mod completions;
@@ -12,6 +13,7 @@ pub mod remove;
 mod shell;
 
 use crate::command::add::AddArgs;
+#[cfg(feature = "autotype")]
 use crate::command::autotype::AutotypeArgs;
 use crate::command::clear_clipboard::ClearClipboardArgs;
 use crate::command::completions::CompletionsArgs;
@@ -91,6 +93,7 @@ pub enum EntSubcommand {
     Remove(RemoveArgs),
     #[command(about = generate::ABOUT, alias = "gen")]
     Generate(GenerateArgs),
+    #[cfg(feature = "autotype")]
     #[command(about = autotype::ABOUT, alias = "type")]
     Autotype(AutotypeArgs),
     #[command(about = completions::ABOUT)]
@@ -118,6 +121,7 @@ pub fn run(ent: EntArgs) -> anyhow::Result<()> {
         Some(EntSubcommand::Get(args)) => get::run(ent.store, args),
         Some(EntSubcommand::Move(args)) => r#move::run(ent.store, args),
         Some(EntSubcommand::Remove(args)) => remove::run(ent.store, args),
+        #[cfg(feature = "autotype")]
         Some(EntSubcommand::Autotype(args)) => autotype::run(ent.store, args),
         Some(EntSubcommand::Tree) => print_tree(&ent.store),
         Some(EntSubcommand::Git(args)) => git::run(ent.store, args),

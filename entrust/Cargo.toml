@@ -26,6 +26,7 @@ required-features = ["agent"]
 
 [features]
 agent = ["entrust-core/agent", "dep:entrust-agent"]
+autotype = ["dep:enigo"]
 tracing = ["dep:tracing", "dep:tracing-subscriber"]
 
 [dependencies]
@@ -39,7 +40,7 @@ clap_complete = "4.5"
 color-print = "0.3"
 const_format = "0.2"
 copypasta = "0.10"
-enigo = "0.3"
+enigo = { version = "0.3", optional = true }
 itertools = { workspace = true }
 rand = { workspace = true }
 shlex = "1.3"
