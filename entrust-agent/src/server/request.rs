@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
+use bincode::{Decode, Encode};
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Encode, Decode, PartialEq, Debug)]
 pub enum Request {
     SetAgeIdentity {
         identity: String,
@@ -12,12 +12,12 @@ pub enum Request {
     Shutdown,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Encode, Decode, PartialEq, Debug)]
 pub struct SetAgeIdentityResponse {
     identity: String,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Encode, Decode, PartialEq, Debug)]
 pub enum GetAgeIdentityResponse {
     Ok { identity: String },
     NotSet,
