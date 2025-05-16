@@ -7,7 +7,8 @@ use std::process::{Command, Stdio};
 pub const RECIPIENT_FILE_NAME: &str = ".gpg-id";
 
 pub fn encrypt(content: &mut impl Read, recipient: &str, out_path: &Path) -> anyhow::Result<()> {
-    let mut child = Command::new("gpg")
+    let (in_read, mut in_write) = io::pipe()?;
+    let child = Command::new("gpg")
         .arg("--encrypt")
         .arg("--armor")
         .arg("--quiet")
@@ -15,12 +16,11 @@ pub fn encrypt(content: &mut impl Read, recipient: &str, out_path: &Path) -> any
         .arg(recipient)
         .arg("--output")
         .arg(out_path.as_os_str())
-        .stdin(Stdio::piped())
+        .stdin(in_read)
         .spawn()?;
-    let mut child_stdin = child.stdin.take().unwrap();
-    io::copy(content, &mut child_stdin)?;
-    drop(child_stdin);
-    let exit_status = child.wait()?;
+    io::copy(content, &mut in_write)?;
+    drop(in_write);
+    let exit_status = child.wait_with_output()?.status;
     exit_status_to_result(exit_status, "gpg")
 }
 

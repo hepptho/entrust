@@ -3,6 +3,7 @@ name = "entrust-core"
 version = "0.2.2"
 edition = "2024"
 description = "En-/decryption and password store management for entrust"
+rust-version = "1.87.0"
 
 authors.workspace = true
 repository.workspace = true

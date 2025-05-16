@@ -2,7 +2,7 @@
 name = "entrust"
 version = "0.3.0"
 edition = "2024"
-rust-version = "1.85" # for 2024 edition
+rust-version = "1.87.0"
 default-run = "ent"
 readme = "../README.md"
 categories = ["command-line-utilities"]
