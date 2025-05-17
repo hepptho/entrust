@@ -1,4 +1,5 @@
 use entrust_agent::client::{get_age_identity, set_age_identity};
+use entrust_agent::env::ENT_AGENT_SOCKET_NAME;
 use entrust_agent::server::{GetAgeIdentityResponse, ServerEvent};
 use entrust_agent::{NO_AGENT_ERROR_KIND, server};
 use std::sync::mpsc;
@@ -9,7 +10,7 @@ use std::{env, thread};
 fn test_age_identity() {
     unsafe {
         // safe in single-threaded context
-        env::set_var("ENT_AGENT_SOCKET_NAME", "ent_test_age_identity.sock");
+        env::set_var(ENT_AGENT_SOCKET_NAME, "ent_test_age_identity.sock");
     }
     let (event_sender, event_receiver) = mpsc::channel::<ServerEvent>();
     thread::spawn(move || server::run(Some(event_sender)).unwrap());

@@ -1,10 +1,11 @@
+use bincode::{Decode, Encode, config::standard};
 use std::borrow::Cow;
+use std::io;
 use std::io::{BufRead, ErrorKind, Write};
 use std::sync::LazyLock;
-use std::{env, io};
-use bincode::{config::standard, Encode, Decode};
 
 pub mod client;
+pub mod env;
 pub mod server;
 
 #[cfg(windows)]
@@ -33,8 +34,4 @@ fn read_deserialized<R: Decode<()>, C: BufRead>(con: &mut C) -> io::Result<R> {
         .map_err(io::Error::other)
 }
 
-static SOCKET_NAME: LazyLock<Cow<str>> = LazyLock::new(|| {
-    env::var("ENT_AGENT_SOCKET_NAME")
-        .map(Cow::Owned)
-        .unwrap_or(Cow::Borrowed("entrust-agent.sock"))
-});
+static SOCKET_NAME: LazyLock<Cow<str>> = LazyLock::new(|| env::agent_socket_name());
