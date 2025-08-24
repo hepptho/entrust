@@ -1,11 +1,11 @@
 [package]
 name = "entrust-core"
-version = "0.2.2"
 edition = "2024"
 description = "En-/decryption and password store management for entrust"
 rust-version = "1.87.0"
 
 authors.workspace = true
+version.workspace = true
 repository.workspace = true
 homepage.workspace = true
 license.workspace = true
@@ -14,7 +14,7 @@ license.workspace = true
 agent = ["dep:entrust-agent"]
 
 [dependencies]
-entrust-agent = { path = "../entrust-agent", version = "0.2.0", optional = true }
+entrust-agent = { path = "../entrust-agent", version = "0.4.0", optional = true }
 
 anyhow = "1.0"
 itertools = { workspace = true }
