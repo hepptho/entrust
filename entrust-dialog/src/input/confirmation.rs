@@ -47,7 +47,7 @@ impl<'p, 'c> InputDialog<'p, 'c> {
         }
     }
 
-    pub(super) fn prompt_with_confirmation(&self) -> Prompt {
+    pub(super) fn prompt_with_confirmation(&self) -> Prompt<'_> {
         self.confirmation
             .as_ref()
             .and_then(|c| {

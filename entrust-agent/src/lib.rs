@@ -34,4 +34,4 @@ fn read_deserialized<R: Decode<()>, C: BufRead>(con: &mut C) -> io::Result<R> {
         .map_err(io::Error::other)
 }
 
-static SOCKET_NAME: LazyLock<Cow<str>> = LazyLock::new(|| env::agent_socket_name());
+static SOCKET_NAME: LazyLock<Cow<str>> = LazyLock::new(env::agent_socket_name);

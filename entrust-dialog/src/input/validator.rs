@@ -27,7 +27,7 @@ impl<'f> Validator<'f> {
     }
 }
 
-pub fn validate_not_empty(message: &str) -> impl ValidatorFn {
+pub fn validate_not_empty(message: &str) -> impl ValidatorFn<'_> {
     |chars| {
         if chars.is_empty() {
             Some(Cow::Borrowed(message))
