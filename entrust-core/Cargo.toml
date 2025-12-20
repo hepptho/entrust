@@ -23,4 +23,4 @@ rand = { workspace = true }
 walkdir = "2.5"
 
 [dev-dependencies]
-tempfile = "3.13"
+tempfile = "3.23"
