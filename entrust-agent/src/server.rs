@@ -3,13 +3,13 @@ mod request;
 
 use crate::server::HandleResult::{Break, Continue};
 use crate::server::event::EventSender;
-use crate::{SOCKET_NAME, read_deserialized, send_serialized};
+use crate::{SOCKET_NAME, receive, send};
 pub use event::ServerEvent;
 use interprocess::local_socket::traits::ListenerExt;
 use interprocess::local_socket::{
     GenericNamespaced, ListenerNonblockingMode, ListenerOptions, ToNsName,
 };
-pub use request::{GetAgeIdentityResponse, Request, SetAgeIdentityResponse};
+pub use request::*;
 use std::io::{BufReader, Read, Write};
 use std::sync::mpsc;
 use std::sync::mpsc::channel;
@@ -54,7 +54,7 @@ pub fn run(event_sender: Option<mpsc::Sender<ServerEvent>>) -> io::Result<()> {
     for result in listener.incoming() {
         let mut con = BufReader::new(result?);
 
-        let request: Request = read_deserialized(&mut con)?;
+        let request = receive!(Request, con)?;
 
         let handle_result = handle_request(request, &mut state, &mut con)?;
         event_sender.send_server_event(ServerEvent::RequestHandled)?;
@@ -93,7 +93,7 @@ fn handle_request<R: Read + Write>(
             } else {
                 GetAgeIdentityResponse::WrongPin
             };
-            send_serialized(&response, con.get_mut())?;
+            send(&response, con.get_mut())?;
             if let GetAgeIdentityResponse::WrongPin = response {
                 Ok(Break)
             } else {
@@ -116,9 +116,9 @@ mod tests {
             pin: Some("pin".to_string()),
         };
         let mut con = BufReader::new(Cursor::new(Vec::new()));
-        send_serialized(&req, con.get_mut()).unwrap();
+        send(&req, con.get_mut()).unwrap();
         con.get_mut().set_position(0);
-        let deserialized = read_deserialized(con.get_mut()).unwrap();
+        let deserialized = receive!(Request, con).unwrap();
         assert_eq!(req, deserialized);
     }
 
@@ -130,7 +130,7 @@ mod tests {
             handle_request(Request::GetAgeIdentity { pin: None }, &mut state, &mut con).unwrap();
         assert_eq!(Continue, result);
         con.get_mut().set_position(0);
-        let response: GetAgeIdentityResponse = read_deserialized(con.get_mut()).unwrap();
+        let response = receive!(GetAgeIdentityResponse, con).unwrap();
         assert_eq!(GetAgeIdentityResponse::NotSet, response);
     }
 
@@ -145,7 +145,7 @@ mod tests {
             handle_request(Request::GetAgeIdentity { pin: None }, &mut state, &mut con).unwrap();
         assert_eq!(Continue, result);
         con.get_mut().set_position(0);
-        let response: GetAgeIdentityResponse = read_deserialized(con.get_mut()).unwrap();
+        let response = receive!(GetAgeIdentityResponse, con).unwrap();
         assert_eq!(
             GetAgeIdentityResponse::Ok {
                 identity: "id".to_string()
@@ -171,7 +171,7 @@ mod tests {
         .unwrap();
         assert_eq!(Continue, result);
         con.get_mut().set_position(0);
-        let response: GetAgeIdentityResponse = read_deserialized(con.get_mut()).unwrap();
+        let response = receive!(GetAgeIdentityResponse, con).unwrap();
         assert_eq!(
             GetAgeIdentityResponse::Ok {
                 identity: "id".to_string()
@@ -197,7 +197,7 @@ mod tests {
         .unwrap();
         assert_eq!(Break, result);
         con.get_mut().set_position(0);
-        let response: GetAgeIdentityResponse = read_deserialized(con.get_mut()).unwrap();
+        let response = receive!(GetAgeIdentityResponse, con).unwrap();
         assert_eq!(GetAgeIdentityResponse::WrongPin, response)
     }
 }

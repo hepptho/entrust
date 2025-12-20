@@ -1,6 +1,6 @@
-use bincode::{Decode, Encode};
+use rkyv::{Archive, Deserialize, Serialize};
 
-#[derive(Encode, Decode, PartialEq, Debug)]
+#[derive(Archive, Serialize, Deserialize, PartialEq, Debug)]
 pub enum Request {
     SetAgeIdentity {
         identity: String,
@@ -12,12 +12,12 @@ pub enum Request {
     Shutdown,
 }
 
-#[derive(Encode, Decode, PartialEq, Debug)]
+#[derive(Archive, Serialize, Deserialize, PartialEq, Debug)]
 pub struct SetAgeIdentityResponse {
     identity: String,
 }
 
-#[derive(Encode, Decode, PartialEq, Debug)]
+#[derive(Archive, Serialize, Deserialize, PartialEq, Debug)]
 pub enum GetAgeIdentityResponse {
     Ok { identity: String },
     NotSet,
