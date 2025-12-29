@@ -1,4 +1,4 @@
-use ratatui::prelude::{Style, Stylize};
+use ratatui::prelude::Style;
 use std::borrow::Cow;
 use std::ops::Deref;
 use std::sync::LazyLock;

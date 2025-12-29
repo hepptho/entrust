@@ -13,5 +13,5 @@ license.workspace = true
 [dependencies]
 anyhow = "1.0"
 fuzzy-matcher = "0.3"
-ratatui = "0.29"
+ratatui = "0.30"
 tracing = { workspace = true }
