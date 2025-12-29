@@ -1,9 +1,9 @@
 [package]
 name = "entrust-dialog"
-edition = "2024"
-rust-version = "1.85" # for 2024 edition
 description = "Interactive terminal dialogs for entrust"
 
+edition.workspace = true
+rust-version.workspace = true
 authors.workspace = true
 version.workspace = true
 repository.workspace = true

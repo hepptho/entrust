@@ -1,13 +1,13 @@
 [package]
 name = "entrust"
-edition = "2024"
-rust-version = "1.87.0"
 default-run = "ent"
 readme = "../README.md"
 categories = ["command-line-utilities"]
 keywords = ["cli"]
 description = "A CLI password manager"
 
+edition.workspace = true
+rust-version.workspace = true
 authors.workspace = true
 version.workspace = true
 repository.workspace = true

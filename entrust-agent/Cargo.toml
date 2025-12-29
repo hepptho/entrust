@@ -1,8 +1,9 @@
 [package]
 name = "entrust-agent"
-edition = "2024"
 description = "A gpg-agent-like background agent for entrust"
 
+edition.workspace = true
+rust-version.workspace = true
 authors.workspace = true
 version.workspace = true
 repository.workspace = true

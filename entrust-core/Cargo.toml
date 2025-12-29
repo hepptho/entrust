@@ -1,9 +1,9 @@
 [package]
 name = "entrust-core"
-edition = "2024"
 description = "En-/decryption and password store management for entrust"
-rust-version = "1.87.0"
 
+edition.workspace = true
+rust-version.workspace = true
 authors.workspace = true
 version.workspace = true
 repository.workspace = true
