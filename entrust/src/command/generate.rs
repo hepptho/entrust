@@ -17,15 +17,12 @@ pub struct GenerateArgs {
     #[arg(default_value = "phrase")]
     pub(super) r#type: Type,
     /// Copy the generated password to the clipboard
-    #[arg(
-        short,
-        long,
-        default_missing_value = "10",
-        num_args = 0..=1,
-        require_equals = true,
-        value_name = "CLEAR AFTER SECONDS",
-    )]
-    pub(super) clipboard: Option<u32>,
+    #[arg(short, long)]
+    pub(super) clipboard: bool,
+    /// Clear the clipboard after the given number of seconds.
+    /// Pass 0 to disable clearing
+    #[arg(short = 'd', long, default_value = "10")]
+    pub(super) clear_clipboard_delay: u32,
     /// Encrypt and store the generated password under the given key
     #[arg(short, long, value_name = "KEY")]
     pub(super) store: Option<String>,
@@ -79,7 +76,7 @@ pub fn run(store: PathBuf, args: GenerateArgs) -> anyhow::Result<()> {
 }
 
 fn output(store: &Path, args: GenerateArgs, pass: String) -> anyhow::Result<()> {
-    if args.clipboard.is_none() && args.store.is_none() {
+    if !args.clipboard && args.store.is_none() {
         if !args.no_anim && io::stdout().is_terminal() {
             animate(&pass);
         } else if io::stdout().is_terminal() {
@@ -98,8 +95,8 @@ fn output(store: &Path, args: GenerateArgs, pass: String) -> anyhow::Result<()> 
             git::add(store, key)?;
         }
     }
-    if let Some(clear_delay_seconds) = args.clipboard {
-        copy_to_clipboard(pass, clear_delay_seconds)?;
+    if args.clipboard && args.clear_clipboard_delay > 0 {
+        copy_to_clipboard(pass, args.clear_clipboard_delay)?;
     }
     Ok(())
 }

@@ -8,7 +8,6 @@ def "nu-complete ent existing-file-or-dir" [] {
   cd $env.ENT_STORE
   glob **/[!.]* | path relative-to $env.ENT_STORE | str replace --all '\' '/'
 }
-def "nu-complete ent generate type" [] { ["phrase", "word"] }
 
 # Add a new password
 export extern "ent add" [
@@ -31,8 +30,9 @@ export extern "ent edit" [
 
 # Generate a random password
 export extern "ent generate" [
-  type?: string@"nu-complete ent generate type"
+  type?: string@["phrase", "word"]
   --clipboard (-c)                                 # Copy the generated password to the clipboard
+  --clear-clipboard-delay (-d)                     # Clear the clipboard after the given number of seconds. Pass 0 to disable clearing
   --store (-s): string@"nu-complete nothing"       # Encrypt and store the generated password under the given key
   --length (-l): int                               # Length of the password (default: 7 words for type phrase; 20 characters for type word)
   --sep: string@"nu-complete nothing"              # Word separator for type phrase
@@ -45,12 +45,18 @@ export extern "ent generate" [
 export extern "ent get" [
   key?: string@"nu-complete ent existing-file" # The key of the password to decrypt
   --clipboard (-c)                             # Copy the password to the clipboard
+  --clear-clipboard-delay (-d)                 # Clear the clipboard after the given number of seconds. Pass 0 to disable clearing
+]
+
+# Run git commands in the password store
+export extern "ent git" [
+  ...args: string                              # The arguments to pass to git
 ]
 
 # Move a password to another location in the store
 export extern "ent mv" [
   from?: string@"nu-complete ent existing-file-or-dir"
-  to?: string
+  to?: string@"nu-complete nothing"
 ]
 
 # Move a password to another location in the store
@@ -58,3 +64,11 @@ export extern "ent rm" [
   from?: string@"nu-complete ent existing-file-or-dir" # The key to delete
   --recurse (-r)                                       # Enable deleting directories
 ]
+
+# Generate shell completions
+export extern "ent completions" [
+    shell: string@[bash, zsh, fish, nushell, elvish, powershell]
+]
+
+# Print this message or the help of the given subcommand(s)
+export extern "ent help" []
