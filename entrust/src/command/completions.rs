@@ -17,6 +17,7 @@ enum Shell {
     Bash,
     Elvish,
     Fish,
+    #[allow(clippy::enum_variant_names)]
     PowerShell,
     Zsh,
     Nushell,
@@ -27,10 +28,8 @@ pub fn run(args: CompletionsArgs) {
     let bin_name = cmd.get_bin_name().unwrap_or(cmd.get_name()).to_string();
     if args.shell == Shell::Nushell {
         print!("{NUSHELL_COMPLETIONS}",)
-    } else {
-        if let Ok(shell) = clap_complete::Shell::try_from(args.shell) {
-            generate(shell, &mut cmd, &bin_name, &mut io::stdout());
-        }
+    } else if let Ok(shell) = clap_complete::Shell::try_from(args.shell) {
+        generate(shell, &mut cmd, &bin_name, &mut io::stdout());
     }
 }
 

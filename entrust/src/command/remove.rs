@@ -34,10 +34,11 @@ pub fn run(store: PathBuf, args: RemoveArgs) -> anyhow::Result<()> {
         fs::remove_file(&location)?;
     };
     git::remove(&store, key)?;
-    if let Some(parent) = location.parent() {
-        if parent.exists() && parent.read_dir()?.next().is_none() {
-            fs::remove_dir(parent)?;
-        }
+    if let Some(parent) = location.parent()
+        && parent.exists()
+        && parent.read_dir()?.next().is_none()
+    {
+        fs::remove_dir(parent)?;
     }
     Ok(())
 }
