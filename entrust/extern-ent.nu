@@ -2,11 +2,11 @@ def "nu-complete nothing" [] { [] }
 def "nu-complete ent backend" [] { ["age", "gpg" ] }
 def "nu-complete ent existing-file" [] {
   cd $env.ENT_STORE
-  glob --no-dir **/[!.]* | path relative-to $env.ENT_STORE | str replace --all '\' '/'
+  glob **/* --exclude [**/.* **/.*/**] --no-dir | path relative-to $env.ENT_STORE | str replace --all '\' '/'
 }
 def "nu-complete ent existing-file-or-dir" [] {
   cd $env.ENT_STORE
-  glob **/[!.]* | path relative-to $env.ENT_STORE | str replace --all '\' '/'
+  glob **/* --exclude [**/.* **/.*/**] | path relative-to $env.ENT_STORE | str replace --all '\' '/'
 }
 
 # Add a new password
