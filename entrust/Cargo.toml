@@ -30,9 +30,9 @@ autotype = ["dep:enigo"]
 tracing = ["dep:tracing", "dep:tracing-subscriber"]
 
 [dependencies]
-entrust-agent = { path = "../entrust-agent", version = "0.5.0", optional = true }
-entrust-core = { path = "../entrust-core", version = "0.5.0" }
-entrust-dialog = { path = "../entrust-dialog", version = "0.5.0" }
+entrust-agent = { path = "../entrust-agent", version = "0.5.1", optional = true }
+entrust-core = { path = "../entrust-core", version = "0.5.1" }
+entrust-dialog = { path = "../entrust-dialog", version = "0.5.1" }
 
 anyhow = "1.0"
 clap = { version = "4.5", features = ["derive", "env", "wrap_help"] }

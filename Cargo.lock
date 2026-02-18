@@ -646,7 +646,7 @@ dependencies = [
 
 [[package]]
 name = "entrust"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -669,7 +669,7 @@ dependencies = [
 
 [[package]]
 name = "entrust-agent"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "interprocess",
  "paste",
@@ -678,7 +678,7 @@ dependencies = [
 
 [[package]]
 name = "entrust-core"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "anyhow",
  "entrust-agent",
@@ -691,7 +691,7 @@ dependencies = [
 
 [[package]]
 name = "entrust-dialog"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "anyhow",
  "fuzzy-matcher",
