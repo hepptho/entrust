@@ -1,7 +1,7 @@
 pub mod add;
 #[cfg(feature = "autotype")]
 mod autotype;
-pub mod clear_clipboard;
+mod clip;
 pub mod completions;
 pub mod edit;
 pub mod generate;
@@ -15,7 +15,7 @@ mod shell;
 use crate::command::add::AddArgs;
 #[cfg(feature = "autotype")]
 use crate::command::autotype::AutotypeArgs;
-use crate::command::clear_clipboard::ClearClipboardArgs;
+use crate::command::clip::ClipArgs;
 use crate::command::completions::CompletionsArgs;
 use crate::command::edit::EditArgs;
 use crate::command::generate::GenerateArgs;
@@ -103,7 +103,7 @@ pub enum EntSubcommand {
     #[command(about = git::ABOUT)]
     Git(GitArgs),
     #[command(hide = true)]
-    ClearClipboard(ClearClipboardArgs),
+    Clip(ClipArgs),
     #[command(hide = true)]
     Shell,
     #[command(hide = true)]
@@ -115,7 +115,7 @@ pub fn run(ent: EntArgs) -> anyhow::Result<()> {
 
     match ent.command {
         Some(EntSubcommand::Add(args)) => add::run(ent.store, args),
-        Some(EntSubcommand::ClearClipboard(args)) => clear_clipboard::run(args),
+        Some(EntSubcommand::Clip(args)) => clip::run(args),
         Some(EntSubcommand::Edit(args)) => edit::run(ent.store, args),
         Some(EntSubcommand::Generate(args)) => generate::run(ent.store, args),
         Some(EntSubcommand::Get(args)) => get::run(ent.store, args),

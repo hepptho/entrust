@@ -35,11 +35,11 @@ entrust-core = { path = "../entrust-core", version = "0.5.1" }
 entrust-dialog = { path = "../entrust-dialog", version = "0.5.1" }
 
 anyhow = "1.0"
+arboard = { version = "3.6" , features = ["wl-clipboard-rs"] }
 clap = { version = "4.5", features = ["derive", "env", "wrap_help"] }
 clap_complete = "4.5"
 color-print = "0.3"
 const_format = "0.2"
-copypasta = "0.10"
 enigo = { version = "0.5", optional = true }
 itertools = { workspace = true }
 rand = { workspace = true }

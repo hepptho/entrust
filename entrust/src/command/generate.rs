@@ -1,13 +1,11 @@
-use anyhow::anyhow;
 use clap::{Args, ValueEnum};
-use copypasta::{ClipboardContext, ClipboardProvider};
 use entrust_core::{Backend, generate_passphrase, generate_password};
 use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
 use crate::animation::animate;
-use crate::command::{BackendValueEnum, clear_clipboard};
+use crate::command::{BackendValueEnum, clip};
 use entrust_core::git;
 
 pub(crate) const ABOUT: &str = "Generate a random password";
@@ -22,7 +20,7 @@ pub struct GenerateArgs {
     /// Clear the clipboard after the given number of seconds.
     /// Pass 0 to disable clearing
     #[arg(short = 'd', long, default_value = "10")]
-    pub(super) clear_clipboard_delay: u32,
+    pub(super) clear_clipboard_delay: u64,
     /// Encrypt and store the generated password under the given key
     #[arg(short, long, value_name = "KEY")]
     pub(super) store: Option<String>,
@@ -101,10 +99,8 @@ fn output(store: &Path, args: GenerateArgs, pass: String) -> anyhow::Result<()> 
     Ok(())
 }
 
-fn copy_to_clipboard(pass: String, clear_delay_seconds: u32) -> anyhow::Result<()> {
-    clear_clipboard::clear_in_new_process(pass.as_str(), clear_delay_seconds)?;
-    ClipboardContext::new()
-        .and_then(|mut ctx| ctx.set_contents(pass))
-        .map_err(|_| anyhow!("Could not access clipboard"))?;
+fn copy_to_clipboard(pass: String, clear_delay_seconds: u64) -> anyhow::Result<()> {
+    clip::clear_in_new_process(pass.as_str(), clear_delay_seconds)?;
+    clip::copy(pass.into())?;
     Ok(())
 }

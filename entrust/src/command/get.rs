@@ -1,9 +1,7 @@
-use crate::command::clear_clipboard;
+use crate::command::clip;
 use crate::key::Key;
-use anyhow::anyhow;
 use clap::Args;
 use color_print::cstr;
-use copypasta::{ClipboardContext, ClipboardProvider};
 use entrust_core::{Backend, resolve_existing_location};
 use std::io;
 use std::io::IsTerminal;
@@ -27,7 +25,7 @@ pub struct GetArgs {
     /// Clear the clipboard after the given number of seconds.
     /// Pass 0 to disable clearing
     #[arg(short = 'd', long, default_value = "10")]
-    pub(super) clear_clipboard_delay: u32,
+    pub(super) clear_clipboard_delay: u64,
 }
 
 pub fn run(store: PathBuf, args: GetArgs) -> anyhow::Result<()> {
@@ -38,10 +36,8 @@ pub fn run(store: PathBuf, args: GetArgs) -> anyhow::Result<()> {
     let decrypted = Backend::decrypt(location)?;
 
     if args.clipboard && args.clear_clipboard_delay > 0 {
-        clear_clipboard::clear_in_new_process(decrypted.as_str(), args.clear_clipboard_delay)?;
-        ClipboardContext::new()
-            .and_then(|mut ctx| ctx.set_contents(decrypted))
-            .map_err(|_| anyhow!("Could not access Clipboard"))?;
+        clip::clear_in_new_process(decrypted.as_str(), args.clear_clipboard_delay)?;
+        clip::copy(decrypted.into())?;
     } else {
         print!("{decrypted}");
         if io::stdout().is_terminal() {
