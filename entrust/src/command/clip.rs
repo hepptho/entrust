@@ -124,8 +124,7 @@ fn trace_match(stdin: &str, current: &str, matches: bool) {
 fn clear_now() -> anyhow::Result<()> {
     #[cfg(feature = "tracing")]
     tracing::info!("clearing clipboard");
-    Clipboard::new()?.clear()?;
-    Ok(())
+    copy("".into())
 }
 
 pub fn clear_in_new_process(content: &str, delay_seconds: u64) -> anyhow::Result<()> {
