@@ -1,5 +1,6 @@
 use crate::select::SelectDialog;
 use crate::select::filter::{FilteredItem, apply_filter};
+use crate::text::Text;
 use crate::theme::Theme;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Layout, Rect};
@@ -28,24 +29,27 @@ impl<'a> Widget for &mut SelectDialog<'a> {
     where
         Self: Sized,
     {
-        let (header_area, list_area, scrollbar_area) = {
-            let (header_area, list_scroll_area) = {
+        let (header_area, separator_area, list_area, scrollbar_area) = {
+            let (header_area, separator_area, list_scroll_area) = {
                 let filter_height = if self.filter_dialog.is_some() { 1 } else { 0 };
+                let separator_height = filter_height;
                 let rects = Layout::vertical(vec![
                     Constraint::Length(filter_height),
+                    Constraint::Length(separator_height),
                     Constraint::Percentage(100),
                 ])
                 .split(area);
-                (rects[0], rects[1])
+                (rects[0], rects[1], rects[2])
             };
             let rects =
                 Layout::horizontal(vec![Constraint::Length(width(self)), Constraint::Length(1)])
                     .split(list_scroll_area);
-            (header_area, rects[0], rects[1])
+            (header_area, separator_area, rects[0], rects[1])
         };
 
         if let Some(ref mut filter_dialog) = self.filter_dialog {
             filter_dialog.render(header_area, buf);
+            Text::from("────────────────────").render(separator_area, buf);
         }
 
         let lines: Vec<Line> = if let Some(ref mut filter_dialog) = self.filter_dialog {
