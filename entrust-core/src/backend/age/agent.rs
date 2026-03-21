@@ -2,6 +2,7 @@ use crate::age::identity::read_identity;
 use anyhow::anyhow;
 use entrust_agent::NO_AGENT_ERROR_KIND;
 use entrust_agent::server::GetAgeIdentityResponse;
+use std::io::Error;
 use std::process::{Command, Stdio};
 use std::time::Duration;
 use std::{io, thread};
@@ -44,17 +45,35 @@ fn start_agent() -> io::Result<()> {
 
 fn set_identity(id: &[u8]) -> anyhow::Result<()> {
     let string = String::from_utf8(id.to_vec())?;
-    let result =
-        entrust_agent::client::set_age_identity(string, entrust_agent::env::agent_pin().ok());
-    match result {
-        Err(e) if e.kind() == NO_AGENT_ERROR_KIND => {
-            thread::sleep(Duration::from_millis(100));
+    with_retry(
+        10,
+        Duration::from_millis(100),
+        |e: &Error| e.kind() == NO_AGENT_ERROR_KIND,
+        || {
             entrust_agent::client::set_age_identity(
-                String::from_utf8(id.to_vec())?,
+                string.clone(),
                 entrust_agent::env::agent_pin().ok(),
             )
-        }
-        result => result,
-    }?;
+        },
+    )?;
     Ok(())
+}
+
+fn with_retry<T, E, N, F>(num: usize, backoff: Duration, on_error: N, action: F) -> Result<T, E>
+where
+    N: Fn(&E) -> bool,
+    F: Fn() -> Result<T, E>,
+{
+    let mut result = action();
+    for _ in 0..num {
+        match result {
+            Ok(value) => return Ok(value),
+            Err(e) if on_error(&e) => {
+                thread::sleep(backoff);
+                result = action();
+            }
+            Err(e) => return Err(e),
+        }
+    }
+    result
 }
